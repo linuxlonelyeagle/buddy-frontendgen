@@ -1,0 +1,70 @@
+#include "Sema.h"
+#include "llvm/Support/raw_ostream.h"
+using namespace frontendgen;
+
+/// Set Module's nodes.
+void Sema::actOnModule(Module *module, std::vector<Rule *> &rules,
+                       Dialect *&dialect, std::vector<Op *> &ops,
+                       std::vector<Opinterface *> &opInterfaces) {
+  module->setRules(rules);
+  module->seDialect(dialect);
+  module->setOps(ops);
+  module->setOpInterfaces(opInterfaces);
+}
+/// Set Rule's node.
+void Sema::actOnRule(Rule *rule,
+                     std::vector<std::vector<AntlrBase *>> &generators) {
+  rule->setGenerators(generators);
+}
+
+/// Set Dialect's nodes.
+void Sema::actOnDialect(Dialect *dialect, llvm::StringRef defName,
+                        llvm::StringRef name,
+                        llvm::StringRef emitAccessorPrefix,
+                        llvm::StringRef cppNamespace) {
+  dialect->setDefName(defName);
+  dialect->setEmitAccessorPrefix(emitAccessorPrefix);
+  dialect->setName(name);
+  dialect->setCppNamespace(cppNamespace);
+}
+
+/// Make a op and make it in the ops.
+void Sema::actOnOps(std::vector<Op *> &ops, llvm::StringRef opName,
+                    llvm::StringRef mnemonic, llvm::StringRef traits,
+                    llvm::StringRef summary, llvm::StringRef description,
+                    llvm::StringRef arguments, llvm::StringRef results,
+                    bool hasCustomAssemblyFormat, llvm::StringRef builders,
+                    bool hasVerifier, llvm::StringRef assemblyFormat,
+                    llvm::StringRef regions,
+                    llvm::StringRef extraClassDeclaration,
+                    bool skipDefaultBuilders, bool hasCanonicalizer) {
+  Op *op = new Op();
+  op->setOpName(opName);
+  op->setMnemonic(mnemonic);
+  op->setTraits(traits);
+  op->setSummary(summary);
+  op->setDescription(description);
+  op->setArguments(arguments);
+  op->setResults(results);
+  op->setHasCustomAssemblyFormat(hasCustomAssemblyFormat);
+  op->setBuilders(builders);
+  op->setHasVerifier(hasVerifier);
+  op->setAssemblyFormat(assemblyFormat);
+  op->setRegions(regions);
+  op->setExtraClassDeclaration(extraClassDeclaration);
+  op->setSkipDefaultBuilders(skipDefaultBuilders);
+  op->setHasCanonicalizer(hasCanonicalizer);
+  ops.push_back(op);
+}
+
+void Sema::actOnOpInterfaces(std::vector<Opinterface *> &opInterfaces,
+                             llvm::StringRef defName, llvm::StringRef name,
+                             llvm::StringRef methods,
+                             llvm::StringRef description) {
+  Opinterface *opInterface = new Opinterface();
+  opInterface->setDefName(defName);
+  opInterface->setName(name);
+  opInterface->setDescription(description);
+  opInterface->setMethods(methods);
+  opInterfaces.push_back(opInterface);
+}
