@@ -13,7 +13,7 @@ void Sema::actOnModule(Module *module, std::vector<Rule *> &rules,
 }
 /// Set Rule's node.
 void Sema::actOnRule(Rule *rule,
-                     std::vector<std::vector<AntlrBase *>> &generators) {
+                     std::vector<GeneratorAndOthers*> &generators) {
   rule->setGenerators(generators);
 }
 

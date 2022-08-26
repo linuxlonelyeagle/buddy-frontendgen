@@ -25,21 +25,33 @@ public:
   llvm::SMLoc getLoc() { return loc; }
   baseKind getKind() const { return kind; }
 };
+
+class GeneratorAndOthers {
+  std::vector<AntlrBase*> generator;
+  llvm::StringRef builderOpName;
+  int opBulderIdx;
+  public:
+  void setBuilderOpName(llvm::StringRef name) { builderOpName = name; } 
+  void setOpBuilderIdx(int idx) { opBulderIdx = idx; }
+  std::vector<AntlrBase*>& getGenerator() { return generator; }
+  llvm::StringRef getBuilderOpName() { return builderOpName; }
+  int getOpBulderIdx() { return opBulderIdx; }
+};
+
 /// This class is used to mark the node in the generator as a rule, and can also
 /// store the generators of a rule.
 class Rule : public AntlrBase {
-  std::vector<std::vector<AntlrBase *>> generators;
-
+  std::vector<GeneratorAndOthers*> generatorsAndOthers;
 public:
   Rule(llvm::StringRef name, llvm::SMLoc loc, baseKind kind)
       : AntlrBase(name, loc, kind) {}
   static bool classof(const AntlrBase *base) {
     return base->getKind() == baseKind::rule;
   }
-  void setGenerators(std::vector<std::vector<AntlrBase *>> &generators) {
-    this->generators = generators;
+  void setGenerators(std::vector<GeneratorAndOthers*> &generatorsAndOthers) { 
+    this->generatorsAndOthers = generatorsAndOthers;
   }
-  std::vector<std::vector<AntlrBase *>> getGenerators() { return generators; }
+  std::vector<GeneratorAndOthers*> getGeneratorsAndOthers() { return generatorsAndOthers; }
 };
 /// The class is used to mark the node in the generator as a terminator.
 class Terminator : public AntlrBase {
@@ -87,6 +99,20 @@ public:
     this->cppNamespace = cppNamespace;
   }
 };
+
+class DAG {
+  llvm::StringRef dagOperator;
+  llvm::SmallVector<llvm::StringRef, 4> operands;
+  llvm::StringMap<llvm::StringRef> operandNames;
+  public:
+  void addOperation(llvm::StringRef operand, llvm::StringRef operandName) {
+    operands.push_back(operand);
+    if (!operandName.empty()) {
+      operandNames[operand]  = operandName; 
+    } 
+  }
+};
+
 /// The class is used to store information about Op class in the TableGen.
 class Op {
   llvm::StringRef opName;

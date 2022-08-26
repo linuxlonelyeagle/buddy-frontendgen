@@ -17,7 +17,7 @@ public:
   void emitAST();
   void emitAntlr(llvm::StringRef grammarName);
   void emit(const std::vector<Rule *> &rules);
-  void emit(const std::vector<std::vector<AntlrBase *>> &generators);
+  void emit(const std::vector<GeneratorAndOthers*> &generators);
   void emit(const std::vector<AntlrBase *> &generator);
   void emitGrammar(llvm::StringRef grammarName);
   void emitTerminators();

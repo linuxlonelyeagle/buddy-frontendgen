@@ -101,13 +101,14 @@ void Parser::parserRules(Rule *rule) {
   if (!consumeNoAdvance(tokenKinds::colon))
     return;
   // A rule contains many generative.
-  std::vector<std::vector<AntlrBase *>> generators;
+  std::vector<GeneratorAndOthers*> generators;
   while (token.getKind() != tokenKinds::semi &&
          token.getKind() == tokenKinds::colon) {
+    int builderIdx = -1;
     advance();
-    std::vector<AntlrBase *> generator;
-    parserGenerator(generator);
-    generators.push_back(generator);
+    GeneratorAndOthers* generatorAndOthers = new GeneratorAndOthers();
+    parserGenerator(generatorAndOthers);
+    generators.push_back(generatorAndOthers);
     if (!token.is(tokenKinds::colon) && !token.is(tokenKinds::semi)) {
       lexer.getDiagnostic().report(token.getLocation(),
                                    DiagnosticEngine::err_expected,
@@ -115,24 +116,49 @@ void Parser::parserRules(Rule *rule) {
       return;
     }
   }
+  
   // Fill the rule ast.
   action.actOnRule(rule, generators);
 }
 
 /// Parser a generator and fill a node in generator.
-void Parser::parserGenerator(std::vector<AntlrBase *> &generator) {
+void Parser::parserGenerator(GeneratorAndOthers* generatorAndOthers) {
   while (token.is(tokenKinds::identifier) || token.is(tokenKinds::apostrophe) ||
          token.is(tokenKinds::plus) || token.is(tokenKinds::asterisk) ||
          token.is(tokenKinds::parentheseOpen) ||
          token.is(tokenKinds::parentheseClose) ||
-         token.is(tokenKinds::questionMark)) {
+         token.is(tokenKinds::questionMark) || token.is(tokenKinds::curlyBlacketOpen)) {
     if (token.is(tokenKinds::identifier))
-      parserIdentifier(generator);
+      parserIdentifier(generatorAndOthers);
     else if (token.is(tokenKinds::apostrophe))
-      parserTerminator(generator);
+      parserTerminator(generatorAndOthers);
+    else if (token.is(tokenKinds::curlyBlacketOpen)) 
+      parserCurlyBracketOpen(generatorAndOthers);
     else
-      parserPBExpression(generator);
+      parserPBExpression(generatorAndOthers);
   }
+}
+
+void Parser::parserCurlyBracketOpen(GeneratorAndOthers* generatorAndOthers) {
+  advance();
+  llvm::SMLoc location = token.getLocation();
+  if (token.getContent() == "builder") {
+    advance();
+    if (!consume(tokenKinds::equal))
+      return;
+    int index = -1;
+    if ((index = token.getContent().find('_')) == -1) 
+      lexer.getDiagnostic().report(token.getLocation(), DiagnosticEngine::err_builder_fail);
+    llvm::StringRef builderOpName = token.getContent().substr(0, index);
+    std::string opBulderIdx = token.getContent().substr(index + 1, token.getContent().size() - index).str();
+    generatorAndOthers->setBuilderOpName(builderOpName);
+    generatorAndOthers->setOpBuilderIdx(std::stoi(opBulderIdx));
+    advance();
+  } else {
+    lexer.getDiagnostic().report(location, DiagnosticEngine::err_only_supported_builder);
+    return;
+  }
+  consume(tokenKinds::curlyBlacketClose);
 }
 
 /// Check if the identifier is a terminator.
@@ -144,33 +170,33 @@ AntlrBase::baseKind Parser::getAntlrBaseKind(llvm::StringRef name) {
 
 /// processing the identifier, get the identifier's kind which stores
 /// in the ast.
-void Parser::parserIdentifier(std::vector<AntlrBase *> &generator) {
+void Parser::parserIdentifier(GeneratorAndOthers *generatorAndOthers) {
   AntlrBase::baseKind baseKind = getAntlrBaseKind(token.getContent());
   AntlrBase *r = nullptr;
   if (baseKind == AntlrBase::baseKind::rule)
     r = new Rule(token.getContent(), token.getLocation(), baseKind);
   else if (baseKind == AntlrBase::AntlrBase::terminator)
     r = new Terminator(token.getContent(), token.getLocation(), baseKind);
-  generator.push_back(r);
+  generatorAndOthers->getGenerator().push_back(r);
   advance();
 }
 
 /// We support user-defined terminator.For example, we can write a 'terminator'
 /// in a rule.
-void Parser::parserTerminator(std::vector<AntlrBase *> &generator) {
+void Parser::parserTerminator(GeneratorAndOthers *generatorAndOthers) {
   advance();
   AntlrBase *terminator = new Terminator(
       token.getContent(), token.getLocation(), AntlrBase::terminator);
-  generator.push_back(terminator);
+  generatorAndOthers->getGenerator().push_back(terminator);
   terminators.addCustomTerminators(token.getContent());
   advance();
   consume(tokenKinds::apostrophe);
 }
 
-void Parser::parserPBExpression(std::vector<AntlrBase *> &generator) {
+void Parser::parserPBExpression(GeneratorAndOthers *generatorAndOthers) {
   AntlrBase *r = new Terminator(token.getContent(), token.getLocation(),
                                 AntlrBase::pbexpression);
-  generator.push_back(r);
+  generatorAndOthers->getGenerator().push_back(r);
   advance();
 }
 /// Parser dialect keyword and fill all information in the dialect.

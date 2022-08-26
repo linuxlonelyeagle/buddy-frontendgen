@@ -6,7 +6,8 @@
                 "${workspaceFolder}/**",
                 "/home/sen/new_buddy3/llvm/llvm/include",
                 "/home/sen/new_buddy3/tools/buddy-frontendgen/include",
-                "/home/sen/new_buddy3/llvm/build/include"
+                "/home/sen/new_buddy3/llvm/build/include",
+                "/home/sen/new_buddy3/llvm/mlir/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

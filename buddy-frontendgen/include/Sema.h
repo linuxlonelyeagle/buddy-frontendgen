@@ -9,7 +9,7 @@ public:
   void actOnModule(Module *module, std::vector<Rule *> &rules,
                    Dialect *&dialect, std::vector<Op *> &ops,
                    std::vector<Opinterface *> &opInterfaces);
-  void actOnRule(Rule *rule, std::vector<std::vector<AntlrBase *>> &generators);
+  void actOnRule(Rule *rule, std::vector<GeneratorAndOthers*> &generators);
   void actOnDialect(Dialect *dialect, llvm::StringRef defName,
                     llvm::StringRef name, llvm::StringRef emitAccessorPrefix,
                     llvm::StringRef cppNamespace);

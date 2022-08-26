@@ -1,13 +1,14 @@
 #include "CGModule.h"
+#include "llvm/Support/Casting.h"
 
 using namespace frontendgen;
 /// Emit the ast,currently only antlr's ast are supported.
 void CGModule::emitAST() {
   for (auto i : module->getRules()) {
     llvm::outs() << "rule name: " << i->getName() << '\n';
-    for (auto j : i->getGenerators()) {
+    for (auto j : i->getGeneratorsAndOthers()) {
       llvm::outs() << "  generator: " << '\n' << "    ";
-      for (auto k : j) {
+      for (auto k : j->getGenerator()) {
         if (k->getKind() == AntlrBase::baseKind::rule)
           llvm::outs() << "\"" << k->getName() << "\"(rule) ";
         else if (k->getKind() == AntlrBase::baseKind::terminator)
@@ -58,18 +59,18 @@ void CGModule::emitCustomTerminators() {
 void CGModule::emit(const std::vector<Rule *> &rules) {
   for (Rule *rule : rules) {
     os << rule->getName() << '\n';
-    emit(rule->getGenerators());
+    emit(rule->getGeneratorsAndOthers());
     os << '\n';
   }
 }
 
-void CGModule::emit(const std::vector<std::vector<AntlrBase *>> &generators) {
-  for (auto generator : generators) {
-    if (generator == generators[0])
+void CGModule::emit(const std::vector<GeneratorAndOthers*> &generatorsAndOthers) {
+  for (GeneratorAndOthers* generatorAndOthers : generatorsAndOthers) {
+    if (generatorAndOthers == generatorsAndOthers[0])
       os << "  : ";
     else
       os << "  | ";
-    emit(generator);
+    emit(generatorAndOthers->getGenerator());
   }
   os << "  ;\n";
 }

@@ -87,6 +87,12 @@ void Lexer::next(Token &token) {
   } else if (*curPtr == '=') {
     formToken(token, curPtr + 1, tokenKinds::equal);
     return;
+  } else if (*curPtr == '{') {
+    formToken(token, curPtr + 1, tokenKinds::curlyBlacketOpen);
+    return;
+  } else if (*curPtr == '}') {
+    formToken(token, curPtr + 1, tokenKinds::curlyBlacketClose);
+    return;
   }
   token.tokenKind = tokenKinds::unknown;
 }

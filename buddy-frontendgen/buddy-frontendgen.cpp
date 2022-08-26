@@ -61,7 +61,7 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
     frontendgen::CGModule CGmodule(module, os, terminators);
     CGmodule.emitAST();
   }
-  for (auto rule : module->getRules()) {
+/*  for (auto rule : module->getRules()) {
     for (auto generator : rule->getGenerators()) {
       for (auto element : generator) {
         delete element;
@@ -75,7 +75,7 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
   for (auto op : module->getOps()) {
     delete op;
   }
-  delete module;
+  delete module;*/
 }
 
 int main(int argc, char *argv[]) {
