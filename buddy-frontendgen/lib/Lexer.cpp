@@ -93,6 +93,24 @@ void Lexer::next(Token &token) {
   } else if (*curPtr == '}') {
     formToken(token, curPtr + 1, tokenKinds::curlyBlacketClose);
     return;
+  } else if (*curPtr == '$') {
+    formToken(token, curPtr + 1, tokenKinds::dollar);
+    return;
+  } else if (*curPtr == ',') {
+    formToken(token, curPtr + 1, tokenKinds::comma);
+    return;
+  } else if (*curPtr == '<') {
+    formToken(token, curPtr + 1, tokenKinds::angleBracketOpen);
+    return;
+  } else if (*curPtr == '>') { 
+    formToken(token, curPtr + 1, tokenKinds::angleBracketClose);
+    return;
+  } else if (*curPtr == '[') {
+    formToken(token, curPtr + 1, tokenKinds::squareBracketOpen);
+    return;
+  } else if (*curPtr == ']') {
+    formToken(token, curPtr + 1, tokenKinds::squareBracketClose);
+    return;
   }
   token.tokenKind = tokenKinds::unknown;
 }

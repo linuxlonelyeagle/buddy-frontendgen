@@ -2,6 +2,8 @@
 #define INCLUDE_AST_H
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/SMLoc.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringMap.h"
 #include <vector>
 namespace frontendgen {
 
@@ -105,12 +107,22 @@ class DAG {
   llvm::SmallVector<llvm::StringRef, 4> operands;
   llvm::StringMap<llvm::StringRef> operandNames;
   public:
+  DAG() {};
+  DAG(const DAG& dag) {
+    this->dagOperator = dag.dagOperator;
+    this->operands = dag.operands;
+    this->operandNames = dag.operandNames;
+  }
   void addOperation(llvm::StringRef operand, llvm::StringRef operandName) {
     operands.push_back(operand);
     if (!operandName.empty()) {
       operandNames[operand]  = operandName; 
     } 
   }
+  llvm::StringRef getDagOperatpr() { return dagOperator; }
+  void setDagOperatpr(llvm::StringRef dagOperator) { this->dagOperator = dagOperator;}
+  llvm::SmallVector<llvm::StringRef, 4> getOperands() { return operands; } 
+  llvm::StringMap<llvm::StringRef> getOperandNames() { return operandNames; } 
 };
 
 /// The class is used to store information about Op class in the TableGen.
@@ -120,8 +132,8 @@ class Op {
   llvm::StringRef traits;
   llvm::StringRef summary;
   llvm::StringRef description;
-  llvm::StringRef arguments;
-  llvm::StringRef results;
+  DAG* arguments;
+  DAG* results;
   bool hasCustomAssemblyFormat;
   llvm::StringRef builders;
   bool hasVerifier;
@@ -137,8 +149,8 @@ public:
   llvm::StringRef getTraits() { return traits; }
   llvm::StringRef getSummary() { return summary; }
   llvm::StringRef getDescription() { return description; }
-  llvm::StringRef getArguments() { return arguments; }
-  llvm::StringRef getResults() { return results; }
+  DAG* getArguments() { return arguments; }
+  DAG* getResults() { return results; }
   bool getHasConstantMaterializer() { return hasCustomAssemblyFormat; }
   llvm::StringRef getBuilders() { return builders; }
   bool getHasVerifier() { return hasVerifier; }
@@ -155,8 +167,8 @@ public:
     this->description = description;
   }
   void setSummary(llvm::StringRef summary) { this->summary = summary; }
-  void setArguments(llvm::StringRef arguments) { this->arguments = arguments; }
-  void setResults(llvm::StringRef results) { this->results = results; }
+  void setArguments(DAG* arguments) { this->arguments = arguments; }
+  void setResults(DAG* results) { this->results = results; }
   void setHasCustomAssemblyFormat(bool hasCustomAssemblyFormat) {
     this->hasCustomAssemblyFormat = hasCustomAssemblyFormat;
   }

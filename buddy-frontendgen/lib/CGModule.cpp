@@ -129,7 +129,6 @@ void CGModule::emitOps() {
   os << "class " << opBaseName
      << "<string mnemonic, list<Trait> traits = []> :\n";
   os << "  Op<" << baseDilectName << ", mnemonic, traits>;\n\n";
-
   for (Op *op : ops) {
     os << "def " << op->getOpName() << " : " << opBaseName << "<"
        << op->getMnemonic();
@@ -138,10 +137,36 @@ void CGModule::emitOps() {
     os << "> { \n";
     if (!op->getSummary().empty())
       os << "  let summary = " << op->getSummary() << ";\n";
-    if (!op->getArguments().empty())
-      os << "  let arguments = " << op->getArguments() << ";\n";
-    if (!op->getResults().empty())
-      os << "  let results = " << op->getResults() << ";\n";
+    if (op->getArguments()) {
+      DAG* dag = op->getArguments();
+      auto operands = dag->getOperands();
+      os << "  let arguments = (";
+      os << dag->getDagOperatpr() <<" ";
+      auto operandNames = dag->getOperandNames();
+      for (auto start = operands.begin(); start != operands.end(); start++) {
+        os << *start;
+        if (operandNames.find(*start) != operandNames.end())
+          os << ":$" << operandNames[*start];
+        if (start + 1 != operands.end()) 
+          os << ", ";
+      }
+        os << ")\n";
+    }
+    if (op->getResults()) {
+      DAG* dag = op->getResults();
+      auto operands = dag->getOperands();
+      os << "  let results = (";
+      os << dag->getDagOperatpr() <<" ";
+      auto operandNames = dag->getOperandNames();
+      for (auto start = operands.begin(); start != operands.end(); start++) {
+        os << *start;
+        if (operandNames.find(*start) != operandNames.end())
+          os << ":$" << operandNames[*start];
+        if (start + 1 != operands.end()) 
+          os << ", ";
+      }
+        os << ")\n";
+    }
     if (op->getHasConstantMaterializer())
       os << "  let hasCustomAssemblyFormat = 1;\n";
     if (op->getHasVerifier())
@@ -188,5 +213,67 @@ void CGModule::emitIncludes() {
   }
   if (!module->getOpInterfaces().empty()) {
     os << "include \"mlir/IR/OpBase.td\"\n";
+  }
+}
+
+void CGModule::emitMLIRVisitor(llvm::StringRef grammarName) {
+  emitIncludes(grammarName);
+  emitClass(grammarName);
+}
+
+void CGModule::emitIncludes(llvm::StringRef grammarName) {
+  os << "#include \"" << grammarName << "BaseVisitor.h\"\n";
+  os << "#include \"" << grammarName <<  "Lexer.h\"\n";
+  os << "#include \"" << grammarName <<"Parser.h\"\n";
+  os << "#include \"mlir/IR/Attributes.h\"\n";
+  os << "#include \"mlir/IR/Builders.h\"\n";
+  os << "#include \"mlir/IR/BuiltinOps.h\"\n";
+  os << "#include \"mlir/IR/BuiltinTypes.h\"\n";
+  os << "#include \"mlir/IR/MLIRContext.h\"\n";
+  os << "#include \"mlir/IR/Verifier.h\"\n";
+  os << "#include \"llvm/ADT/STLExtras.h\"\n";
+  os << "#include \"llvm/ADT/ScopedHashTable.h\"\n";
+  os << "#include \"llvm/ADT/StringRef.h\"\n";
+  os << "#include \"llvm/Support/raw_ostream.h\"\n";
+  os << "\n";
+}
+
+void CGModule::emitClass(llvm::StringRef gramarName) {
+  os << "class MLIRToy" << gramarName << "Visitor : public " <<  gramarName << "BaseVisitor {\n";
+
+  os << "public:\n";
+  os << "MLIR" << gramarName << "Visitor(std::string filename, mlir::MLIRContext &context)\n"
+     << ": builder(&context), fileName(filename) " << "{\n theModule = mlir::ModuleOp::create(builder.getUnknownLoc()); \n}\n\n";
+  os << "mlir::ModuleOp getModule() { return theModule; }\n\n";
+
+  os << "private:\n";
+  os << "mlir::ModuleOp theModule;\n";
+  os << "mlir::OpBuilder builder;\n";
+  os << "std::string fileName;\n\n";
+  auto rules = module->getRules();
+  for (auto rule : rules) {
+    emitRuleVisitor(gramarName, rule);
+  }
+  os << "}\n";
+}
+
+
+void CGModule::emitRuleVisitor(llvm::StringRef grammarName, Rule* rule) {
+  std::string ruleName = rule->getName().str();
+  ruleName[0] = ruleName[0] - 32;
+  os << "virtual std::any visit" << ruleName;
+  os << "(" << grammarName << "Parser::" << ruleName << "Context *ctx) {\n";
+  emitBuilder(rule);
+  os << "  return visitChildren(ctx);\n";
+  os << "}\n\n";
+}
+
+
+void CGModule::emitBuilder(Rule* rule) {
+  for (GeneratorAndOthers* generatorAndOthers : rule->getGeneratorsAndOthers()) {
+    if (generatorAndOthers->getOpBulderIdx() != -1) {
+      llvm::StringRef opName = generatorAndOthers->getBuilderOpName();
+      
+    }
   }
 }

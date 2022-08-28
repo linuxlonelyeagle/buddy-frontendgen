@@ -28,6 +28,11 @@ public:
   void emitOps();
   void emitOpInterfaces();
   void emitIncludes();
+  void emitIncludes(llvm::StringRef grammarName);
+  void emitMLIRVisitor(llvm::StringRef grammarName);
+  void emitClass(llvm::StringRef grammarName);
+  void emitRuleVisitor(llvm::StringRef grammarName, Rule* rule);
+  void emitBuilder(Rule* rule);
 };
 } // namespace frontendgen
 

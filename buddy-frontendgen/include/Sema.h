@@ -16,7 +16,7 @@ public:
   void actOnOps(std::vector<Op *> &ops, llvm::StringRef opName,
                 llvm::StringRef mnemonic, llvm::StringRef traits,
                 llvm::StringRef summary, llvm::StringRef description,
-                llvm::StringRef arguments, llvm::StringRef results,
+                DAG* arguments, DAG* results,
                 bool hasCustomAssemblyFormat, llvm::StringRef builders,
                 bool hasVerifier, llvm::StringRef assemblyFormat,
                 llvm::StringRef regions, llvm::StringRef extraClassDeclaration,
@@ -24,6 +24,7 @@ public:
   void actOnOpInterfaces(std::vector<Opinterface *> &opInterfaces,
                          llvm::StringRef defName, llvm::StringRef name,
                          llvm::StringRef methods, llvm::StringRef description);
+  void actOnDag(DAG*& arguments, DAG& dag);
 };
 } // namespace frontendgen
 #endif

@@ -32,7 +32,7 @@ void Sema::actOnDialect(Dialect *dialect, llvm::StringRef defName,
 void Sema::actOnOps(std::vector<Op *> &ops, llvm::StringRef opName,
                     llvm::StringRef mnemonic, llvm::StringRef traits,
                     llvm::StringRef summary, llvm::StringRef description,
-                    llvm::StringRef arguments, llvm::StringRef results,
+                    DAG* arguments, DAG* results,
                     bool hasCustomAssemblyFormat, llvm::StringRef builders,
                     bool hasVerifier, llvm::StringRef assemblyFormat,
                     llvm::StringRef regions,
@@ -67,4 +67,8 @@ void Sema::actOnOpInterfaces(std::vector<Opinterface *> &opInterfaces,
   opInterface->setDescription(description);
   opInterface->setMethods(methods);
   opInterfaces.push_back(opInterface);
+}
+
+void Sema::actOnDag(DAG*& arguments, DAG& dag) {
+  arguments = new DAG(dag);
 }

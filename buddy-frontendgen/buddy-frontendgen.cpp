@@ -9,43 +9,41 @@
 #include "llvm/Support/raw_ostream.h"
 
 llvm::cl::opt<std::string> inputFileName("f", llvm::cl::desc("<input file>"));
-llvm::cl::opt<std::string> outputFileName("o", llvm::cl::desc("<output file>"));
+llvm::cl::opt<std::string> grammarName("g", llvm::cl::desc("<grammar name>"));
 
 namespace {
-enum Action { none, dumpAst, dumpAntlr, dumpTd, dumpAntlrAndTd };
+enum Action { none, dumpAst, dumpAntlr, dumpTd, dumpAll, dumpVisitor };
 }
 
 llvm::cl::opt<Action> emitAction(
     "emit", llvm::cl::desc("Select the kind of output desired"),
     llvm::cl::values(clEnumValN(dumpAst, "ast", "Out put the ast")),
     llvm::cl::values(clEnumValN(dumpAntlr, "antlr", "Out put the antlr file")),
-    llvm::cl::values(clEnumValN(dumpTd, "td", "put out the td file")),
-    llvm::cl::values(clEnumValN(dumpAntlrAndTd, "all", "put out all file")));
+    llvm::cl::values(clEnumValN(dumpTd, "td", "Out put the td file")),
+    llvm::cl::values(clEnumValN(dumpVisitor, "visitor", "Out put the visitor file")),
+    llvm::cl::values(clEnumValN(dumpAll, "all", "put out all file")));
 
 /// Control generation of ast, tablegen files and antlr files.
 void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
   bool emitAst = emitAction == Action::dumpAst;
   bool emitAntlr =
-      emitAction == Action::dumpAntlr || emitAction == Action::dumpAntlrAndTd;
+      emitAction == Action::dumpAntlr || emitAction == Action::dumpAll;
   bool emitTd =
-      emitAction == Action::dumpTd || emitAction == Action::dumpAntlrAndTd;
+      emitAction == Action::dumpTd || emitAction == Action::dumpAll;
+  bool emitVisitor = emitAction == Action::dumpVisitor || emitAction == Action::dumpAll;
   if (emitAntlr) {
-    if (outputFileName.empty()) {
+    if (grammarName.empty()) {
       llvm::errs() << "if you want to emit g4 file you have to point out the "
-                      "name of outputfile.\n";
+                      "name of grammar.\n";
       return;
     }
-    if (!llvm::StringRef(outputFileName.c_str()).endswith(".g4")) {
-      llvm::errs() << "outputfile name have to end with .g4.\n";
-      return;
-    }
-    llvm::StringRef grammerName =
-        llvm::StringRef(outputFileName.c_str(), outputFileName.size() - 3);
     std::error_code EC;
     llvm::sys::fs::OpenFlags openFlags = llvm::sys::fs::OpenFlags::OF_None;
-    auto Out = llvm::ToolOutputFile(outputFileName.c_str(), EC, openFlags);
+    std::string outputFileName = grammarName.c_str();
+    outputFileName += ".g4";
+    auto Out = llvm::ToolOutputFile(outputFileName, EC, openFlags);
     frontendgen::CGModule CGmodule(module, Out.os(), terminators);
-    CGmodule.emitAntlr(grammerName);
+    CGmodule.emitAntlr(grammarName);
     Out.keep();
   }
   if (emitTd && module->getDialect()) {
@@ -56,16 +54,28 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
     CGmodule.emitTd();
     Out.keep();
   }
-  if (emitAction == dumpAst && !module->getRules().empty()) {
+  if (emitAst && !module->getRules().empty()) {
     llvm::raw_fd_ostream os(-1, true);
     frontendgen::CGModule CGmodule(module, os, terminators);
     CGmodule.emitAST();
   }
-/*  for (auto rule : module->getRules()) {
-    for (auto generator : rule->getGenerators()) {
-      for (auto element : generator) {
+  if (emitVisitor && !module->getRules().empty()) {
+    std::error_code EC;
+    llvm::sys::fs::OpenFlags openFlags = llvm::sys::fs::OpenFlags::OF_None;
+    std::string outputFileName("MLIR");
+    outputFileName = outputFileName + grammarName + "Visitor.h";
+    auto Out = llvm::ToolOutputFile(outputFileName, EC, openFlags);
+    frontendgen::CGModule CGmodule(module, Out.os(), terminators);
+    CGmodule.emitMLIRVisitor(grammarName);
+    Out.keep();
+  }
+
+  for (auto rule : module->getRules()) {
+    for (auto generatorsAndOthers : rule->getGeneratorsAndOthers()) {
+      for (auto element : generatorsAndOthers->getGenerator()) {
         delete element;
       }
+      delete generatorsAndOthers;
     }
     delete rule;
   }
@@ -75,7 +85,7 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
   for (auto op : module->getOps()) {
     delete op;
   }
-  delete module;*/
+  delete module;
 }
 
 int main(int argc, char *argv[]) {

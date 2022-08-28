@@ -244,8 +244,8 @@ bool Parser::parserOp(std::vector<Op *> &ops, llvm::StringRef opName) {
   llvm::StringRef traits;
   llvm::StringRef summary;
   llvm::StringRef description;
-  llvm::StringRef arguments;
-  llvm::StringRef results;
+  DAG* arguments = nullptr;
+  DAG* results = nullptr;
   bool hasCustomAssemblyFormat = false;
   llvm::StringRef builders;
   bool hasVerifier = false;
@@ -285,13 +285,13 @@ bool Parser::parserOp(std::vector<Op *> &ops, llvm::StringRef opName) {
       advance();
       if (!consumeNoAdvance(tokenKinds::equal))
         return false;
-      arguments = lexer.getMarkContent("(", ")");
+      parserDAG(arguments);
       advance();
     } else if (token.getContent() == "results") {
       advance();
       if (!consumeNoAdvance(tokenKinds::equal))
         return false;
-      results = lexer.getMarkContent("(", ")");
+      parserDAG(results);
       advance();
     } else if (token.getContent() == "hasCustomAssemblyFormat") {
       advance();
@@ -417,4 +417,47 @@ bool Parser::parserOpinterface(std::vector<Opinterface *> &opInterfaces) {
   if (!consume(semi))
     return false;
   return true;
+}
+
+void Parser::parserDAG(DAG*& arguments) { 
+  DAG dag;
+  advance();
+  consume(tokenKinds::parentheseOpen);
+  llvm::StringRef dagOperator = token.getContent();
+  advance();
+  while (token.is(tokenKinds::identifier)) {
+    int number = 0;
+    llvm::StringRef operandName;
+    llvm::StringRef operand = token.getContent();
+    advance();
+    if (token.is(tokenKinds::angleBracketOpen)) {
+      number++;
+      advance();
+      if (token.is(tokenKinds::squareBracketOpen)) {
+        advance();
+        number++;
+      }
+      llvm::StringRef type = token.getContent();
+      advance();
+      if (token.is(tokenKinds::squareBracketClose)) {
+        advance();
+        number++;
+      }
+      consume(tokenKinds::angleBracketClose);
+      number++;
+      operand = llvm::StringRef(operand.data(), operand.size() + number + type.size());
+    } 
+    if (token.is(tokenKinds::colon)) {
+      advance();
+      advance();
+      operandName = token.getContent();
+      advance();
+    }
+    dag.addOperation(operand, operandName);
+    if (token.is(tokenKinds::comma))
+    advance();
+  }
+  dag.setDagOperatpr(dagOperator);
+  consumeNoAdvance(tokenKinds::parentheseClose);
+  action.actOnDag(arguments, dag);
 }
