@@ -141,31 +141,35 @@ void CGModule::emitOps() {
       DAG* dag = op->getArguments();
       auto operands = dag->getOperands();
       os << "  let arguments = (";
-      os << dag->getDagOperatpr() <<" ";
+      os << dag->getDagOperater() <<" ";
       auto operandNames = dag->getOperandNames();
+      int number = 0;
       for (auto start = operands.begin(); start != operands.end(); start++) {
         os << *start;
-        if (operandNames.find(*start) != operandNames.end())
-          os << ":$" << operandNames[*start];
+        if (!operandNames[number].empty())
+          os << ":$" << operandNames[number];
         if (start + 1 != operands.end()) 
           os << ", ";
+        number++;
       }
-        os << ")\n";
+        os << ");\n";
     }
     if (op->getResults()) {
       DAG* dag = op->getResults();
       auto operands = dag->getOperands();
       os << "  let results = (";
-      os << dag->getDagOperatpr() <<" ";
+      os << dag->getDagOperater() <<" ";
       auto operandNames = dag->getOperandNames();
+      int number = 0;
       for (auto start = operands.begin(); start != operands.end(); start++) {
         os << *start;
-        if (operandNames.find(*start) != operandNames.end())
-          os << ":$" << operandNames[*start];
+        if (!operandNames[number].empty())
+          os << ":$" << operandNames[number];
         if (start + 1 != operands.end()) 
           os << ", ";
+          number++;
       }
-        os << ")\n";
+        os << ");\n";
     }
     if (op->getHasConstantMaterializer())
       os << "  let hasCustomAssemblyFormat = 1;\n";
@@ -173,8 +177,33 @@ void CGModule::emitOps() {
       os << "  let hasVerifier = 1;\n";
     if (!op->getDescription().empty())
       os << "  let description = " << op->getDescription() << ";\n";
-    if (!op->getBuilders().empty())
-      os << "  let builders = " << op->getBuilders() << ";\n";
+    if (!op->getBuilders().empty()) {
+      os << "  let builders = [\n";
+      std::vector<Builder*> builders = op->getBuilders();
+      for (auto start = builders.begin(); start != builders.end(); start++) {
+        DAG* dag = (*start)->getDag();
+        os << "    OpBuilder<(" << dag->getDagOperater() << " ";
+        int number = 0;
+        auto operandNames = dag->getOperandNames();
+        for (auto start = dag->getOperands().begin(); start != dag->getOperands().end(); start++) {
+          if (!dag->findValue(*start).empty()) { 
+            os << "CArg<" << *start << "," << dag->findValue(*start) << ">";
+          } else 
+            os << *start;
+          if (!operandNames[number].empty()) 
+            os << ":$" << operandNames[number];
+          if (start + 1 != dag->getOperands().end()) 
+            os << ",";
+          number++;
+        }
+        os << ")>";
+        if (start + 1 != builders.end()) 
+          os << ",\n";
+        else 
+          os << "\n";
+      }
+      os << "  ];\n";
+    } 
     if (!op->getExtraClassDeclaration().empty())
       os << "  let extraClassDeclaration = " << op->getExtraClassDeclaration()
          << ";\n";
@@ -271,9 +300,6 @@ void CGModule::emitRuleVisitor(llvm::StringRef grammarName, Rule* rule) {
 
 void CGModule::emitBuilder(Rule* rule) {
   for (GeneratorAndOthers* generatorAndOthers : rule->getGeneratorsAndOthers()) {
-    if (generatorAndOthers->getOpBulderIdx() != -1) {
-      llvm::StringRef opName = generatorAndOthers->getBuilderOpName();
-      
-    }
+     
   }
 }

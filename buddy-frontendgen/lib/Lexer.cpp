@@ -111,6 +111,9 @@ void Lexer::next(Token &token) {
   } else if (*curPtr == ']') {
     formToken(token, curPtr + 1, tokenKinds::squareBracketClose);
     return;
+  } else if (*curPtr == '"') {
+    formToken(token, curPtr + 1, tokenKinds::doubleQuotationMark);
+    return;
   }
   token.tokenKind = tokenKinds::unknown;
 }
@@ -167,4 +170,13 @@ llvm::StringRef Lexer::getMarkContent(std::string start, std::string end) {
   llvm::StringRef content(curPtr, endPtr - curPtr);
   curPtr = endPtr;
   return content;
+}
+
+llvm::StringRef Lexer::getEndChContent(const char* start, char ch) {
+  const char* endPtr = curPtr;
+  while (*endPtr != ch) 
+    endPtr++;
+  endPtr++;
+  curPtr = endPtr;
+  return llvm::StringRef(start, endPtr - start);
 }

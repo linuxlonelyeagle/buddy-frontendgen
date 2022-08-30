@@ -36,6 +36,7 @@ public:
   void number(Token &token);
   void formToken(Token &token, const char *tokenEnd, tokenKinds kind);
   llvm::StringRef getMarkContent(std::string start, std::string end);
+  llvm::StringRef getEndChContent(const char* start, char ch);
 };
 
 } // namespace frontendgen

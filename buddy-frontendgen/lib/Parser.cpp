@@ -143,21 +143,30 @@ void Parser::parserCurlyBracketOpen(GeneratorAndOthers* generatorAndOthers) {
   advance();
   llvm::SMLoc location = token.getLocation();
   if (token.getContent() == "builder") {
+    llvm::SmallVector<llvm::StringRef, 4> builderNames;
+    llvm::SmallVector<int> builderIdxs;
     advance();
     if (!consume(tokenKinds::equal))
       return;
-    int index = -1;
-    if ((index = token.getContent().find('_')) == -1) 
-      lexer.getDiagnostic().report(token.getLocation(), DiagnosticEngine::err_builder_fail);
-    llvm::StringRef builderOpName = token.getContent().substr(0, index);
-    std::string opBulderIdx = token.getContent().substr(index + 1, token.getContent().size() - index).str();
-    generatorAndOthers->setBuilderOpName(builderOpName);
-    generatorAndOthers->setOpBuilderIdx(std::stoi(opBulderIdx));
-    advance();
+    while (token.is(identifier)) {
+      int index;
+      if ((index = token.getContent().find('_')) == -1) 
+        lexer.getDiagnostic().report(token.getLocation(), DiagnosticEngine::err_builder_fail);
+        llvm::StringRef builderOpName = token.getContent().substr(0, index);
+        std::string opBulderIdx = token.getContent().substr(index + 1, token.getContent().size() - index).str();
+        builderNames.push_back(builderOpName);
+        builderIdxs.push_back(std::stoi(opBulderIdx));
+        advance();
+        if (token.is(tokenKinds::comma))
+          advance();
+    }
+    generatorAndOthers->setbuilderNames(builderNames);
+    generatorAndOthers->setbuilderIdxs(builderIdxs);
   } else {
     lexer.getDiagnostic().report(location, DiagnosticEngine::err_only_supported_builder);
     return;
   }
+  
   consume(tokenKinds::curlyBlacketClose);
 }
 
@@ -247,7 +256,7 @@ bool Parser::parserOp(std::vector<Op *> &ops, llvm::StringRef opName) {
   DAG* arguments = nullptr;
   DAG* results = nullptr;
   bool hasCustomAssemblyFormat = false;
-  llvm::StringRef builders;
+  std::vector<Builder*> builders;
   bool hasVerifier = false;
   llvm::StringRef assemblyFormat;
   llvm::StringRef regions;
@@ -304,9 +313,10 @@ bool Parser::parserOp(std::vector<Op *> &ops, llvm::StringRef opName) {
       advance();
     } else if (token.getContent() == "builders") {
       advance();
-      if (!consumeNoAdvance(tokenKinds::equal))
+      if (!consume(tokenKinds::equal))
         return false;
-      builders = lexer.getMarkContent("[", "]");
+      //builders = lexer.getMarkContent("[", "]");
+      parserBuilders(builders);
       advance();
     } else if (token.getContent() == "hasVerifier") {
       advance();
@@ -425,12 +435,20 @@ void Parser::parserDAG(DAG*& arguments) {
   consume(tokenKinds::parentheseOpen);
   llvm::StringRef dagOperator = token.getContent();
   advance();
-  while (token.is(tokenKinds::identifier)) {
+  while (token.is(tokenKinds::identifier) || token.is(tokenKinds::doubleQuotationMark)) {
     int number = 0;
     llvm::StringRef operandName;
-    llvm::StringRef operand = token.getContent();
-    advance();
-    if (token.is(tokenKinds::angleBracketOpen)) {
+    llvm::StringRef operand;
+    llvm::StringRef value;
+    if (token.getContent() == "CArg") {
+      parserCArg(operand, value);
+    } else if(token.is(tokenKinds::doubleQuotationMark)) {
+      operand = lexer.getEndChContent(token.getContent().data(), '"');
+      advance();
+    } else {
+      operand = token.getContent();
+      advance();
+      if (token.is(tokenKinds::angleBracketOpen)) {
       number++;
       advance();
       if (token.is(tokenKinds::squareBracketOpen)) {
@@ -447,13 +465,17 @@ void Parser::parserDAG(DAG*& arguments) {
       number++;
       operand = llvm::StringRef(operand.data(), operand.size() + number + type.size());
     } 
+    } 
+    // 如果命名
     if (token.is(tokenKinds::colon)) {
       advance();
       advance();
       operandName = token.getContent();
       advance();
     }
-    dag.addOperation(operand, operandName);
+    dag.addOperand(operand, operandName);
+    if (!value.empty())
+      dag.setValue(operand, value);
     if (token.is(tokenKinds::comma))
     advance();
   }
@@ -461,3 +483,42 @@ void Parser::parserDAG(DAG*& arguments) {
   consumeNoAdvance(tokenKinds::parentheseClose);
   action.actOnDag(arguments, dag);
 }
+
+void Parser::parserBuilders(std::vector<Builder*> &builders) {
+  if (!consume(tokenKinds::squareBracketOpen)) 
+    return;
+  while (token.getContent() == "OpBuilder") {
+    DAG* dag = nullptr;
+    llvm::StringRef code;
+    advance();
+    if (!consumeNoAdvance(tokenKinds::angleBracketOpen)) 
+      return;
+    parserDAG(dag);
+    advance();
+    if (token.is(tokenKinds::comma)) {
+      parserCode(code);
+      advance();
+    }
+    if (!consume(tokenKinds::angleBracketClose))
+      return;
+    Builder* builder = new Builder(dag, code);
+    builders.push_back(builder);
+    if (token.is(tokenKinds::comma))
+      advance();   
+  }
+  consumeNoAdvance(tokenKinds::squareBracketClose);
+}
+
+void Parser::parserCode(llvm::StringRef& code) {
+  code = lexer.getMarkContent("[", "]");
+}
+
+void Parser::parserCArg(llvm::StringRef& operand, llvm::StringRef& value) {
+  advance();
+  operand = lexer.getMarkContent("\"", "\"");
+  advance();
+  value = lexer.getMarkContent("\"", "\"");
+  advance();
+  advance();
+}
+

@@ -23,10 +23,11 @@ op ConsantOp
   : summary = "consant" 
   : arguments = (ins F64ElementsAttr : $value)
   : results = (outs F64Tensor)
-  : hasCustomAssemblyFormat = 1 : builders = [
+  : hasCustomAssemblyFormat = 1 
+  : builders = [
     OpBuilder<(ins "DenseElementsAttr" : $value),
-    [{ build($_builder, $_state, value.getType(), value); }]>,
-    OpBuilder<(ins "double" : $value)>] 
+    [{ build($_builder, $_state, value.getType(), value); }]>, 
+    OpBuilder<(ins "double":$value)>]
   : hasVerifier = 1
   ;
 
@@ -119,11 +120,13 @@ op ReturnOp
   ;
 
 rule module 
-  : funDefine + 
-  ;
+   : funDefine 
+   ;
 
 rule expression 
-  : Number : tensorLiteral : identifierExpr
+  : Number 
+  : tensorLiteral
+  : identifierExpr 
   ;
 
 rule returnExpr 
@@ -166,7 +169,9 @@ rule block
   ;
 
 rule blockExpr 
-  : varDecl 
+  : varDecl {
+    builder = ConstantOp_1, ConstantOp_2 
+  }
   : returnExpr 
   : expression
   ;

@@ -17,7 +17,7 @@ public:
                 llvm::StringRef mnemonic, llvm::StringRef traits,
                 llvm::StringRef summary, llvm::StringRef description,
                 DAG* arguments, DAG* results,
-                bool hasCustomAssemblyFormat, llvm::StringRef builders,
+                bool hasCustomAssemblyFormat, std::vector<Builder*>& builders,
                 bool hasVerifier, llvm::StringRef assemblyFormat,
                 llvm::StringRef regions, llvm::StringRef extraClassDeclaration,
                 bool skipDefaultBuilders, bool hasCanonicalizer);

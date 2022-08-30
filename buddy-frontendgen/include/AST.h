@@ -30,14 +30,14 @@ public:
 
 class GeneratorAndOthers {
   std::vector<AntlrBase*> generator;
-  llvm::StringRef builderOpName;
-  int opBulderIdx;
+  llvm::SmallVector<llvm::StringRef, 4> builderNames;
+  llvm::SmallVector<int> builderIdxs; 
   public:
-  void setBuilderOpName(llvm::StringRef name) { builderOpName = name; } 
-  void setOpBuilderIdx(int idx) { opBulderIdx = idx; }
+  void setbuilderNames(llvm::SmallVector<llvm::StringRef, 4> builderNames) { this->builderNames = builderNames; } 
+  void setbuilderIdxs(llvm::SmallVector<int> builderIdxs) { this->builderIdxs = builderIdxs; }
   std::vector<AntlrBase*>& getGenerator() { return generator; }
-  llvm::StringRef getBuilderOpName() { return builderOpName; }
-  int getOpBulderIdx() { return opBulderIdx; }
+  llvm::SmallVector<llvm::StringRef,4> getBuilderNames() { return this->builderNames; }
+  llvm::SmallVector<int> getbulderIdxs() { return this->builderIdxs; }
 };
 
 /// This class is used to mark the node in the generator as a rule, and can also
@@ -105,24 +105,45 @@ public:
 class DAG {
   llvm::StringRef dagOperator;
   llvm::SmallVector<llvm::StringRef, 4> operands;
-  llvm::StringMap<llvm::StringRef> operandNames;
+  llvm::SmallVector<llvm::StringRef, 4> operandNames; 
+  llvm::StringMap<llvm::StringRef> values;
   public:
   DAG() {};
   DAG(const DAG& dag) {
     this->dagOperator = dag.dagOperator;
     this->operands = dag.operands;
     this->operandNames = dag.operandNames;
+    this->values = dag.values;
   }
-  void addOperation(llvm::StringRef operand, llvm::StringRef operandName) {
+
+  void addOperand(llvm::StringRef operand, llvm::StringRef operandName) {
     operands.push_back(operand);
-    if (!operandName.empty()) {
-      operandNames[operand]  = operandName; 
-    } 
+    operandNames.push_back(operandName);
   }
-  llvm::StringRef getDagOperatpr() { return dagOperator; }
+  void setValue(llvm::StringRef operand, llvm::StringRef value) {
+    values[operand] = value;
+  }
+  llvm::StringRef findValue(llvm::StringRef operand) {
+    if (values.find(operand) == values.end())
+      return llvm::StringRef();
+    return values[operand]; 
+  }
+  llvm::StringRef getDagOperater() { return dagOperator; }
   void setDagOperatpr(llvm::StringRef dagOperator) { this->dagOperator = dagOperator;}
   llvm::SmallVector<llvm::StringRef, 4> getOperands() { return operands; } 
-  llvm::StringMap<llvm::StringRef> getOperandNames() { return operandNames; } 
+  llvm::SmallVector<llvm::StringRef, 4> getOperandNames() { return operandNames; } 
+};
+
+class Builder {
+  DAG* dag = nullptr;
+  llvm::StringRef code;
+  public:
+  Builder(DAG* dag, llvm::StringRef code) {
+    this->dag = dag;
+    this->code = code;
+  }
+  DAG* getDag() { return dag; }
+  llvm::StringRef getCode() { return code; }
 };
 
 /// The class is used to store information about Op class in the TableGen.
@@ -135,7 +156,7 @@ class Op {
   DAG* arguments;
   DAG* results;
   bool hasCustomAssemblyFormat;
-  llvm::StringRef builders;
+  std::vector<Builder*> builders;
   bool hasVerifier;
   llvm::StringRef assemblyFormat;
   llvm::StringRef regions;
@@ -152,7 +173,7 @@ public:
   DAG* getArguments() { return arguments; }
   DAG* getResults() { return results; }
   bool getHasConstantMaterializer() { return hasCustomAssemblyFormat; }
-  llvm::StringRef getBuilders() { return builders; }
+  std::vector<Builder*> getBuilders() { return builders; }
   bool getHasVerifier() { return hasVerifier; }
   llvm::StringRef getRegions() { return regions; }
   llvm::StringRef getAssemblyFormat() { return assemblyFormat; }
@@ -172,7 +193,7 @@ public:
   void setHasCustomAssemblyFormat(bool hasCustomAssemblyFormat) {
     this->hasCustomAssemblyFormat = hasCustomAssemblyFormat;
   }
-  void setBuilders(llvm::StringRef builders) { this->builders = builders; }
+  void setBuilders(std::vector<Builder*>& builders) { this->builders = builders; }
   void setHasVerifier(bool hasVerifier) { this->hasVerifier = hasVerifier; }
   void setAssemblyFormat(llvm::StringRef assemblyFormat) {
     this->assemblyFormat = assemblyFormat;

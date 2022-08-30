@@ -36,6 +36,9 @@ public:
   bool parserOpinterface(std::vector<Opinterface *> &opInterfaces);
   void parserCurlyBracketOpen(GeneratorAndOthers* generatorAndOthers);
   void parserDAG(DAG*& dag);
+  void parserBuilders(std::vector<Builder*>& builders);
+  void parserCode(llvm::StringRef& code);
+  void parserCArg(llvm::StringRef& operand, llvm::StringRef& value);
 };
 } // namespace frontendgen
 
