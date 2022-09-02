@@ -1,0 +1,13 @@
+#ifndef TYPEMAP
+#define TYPEMAP(key, value)
+#endif
+TYPEMAP("\"StringRef\"", "llvm::StringRef")
+TYPEMAP("\"ArrayRef<Value>\"", "llvm::ArrayRef<Value>")
+TYPEMAP("\"FunctionType\"", "llvm::FunctionType")
+TYPEMAP("\"ArrayRef<NamedAttribute>\"", "llvm::ArrayRef<NamedAttribute>")
+TYPEMAP("\"Value\"", "mlir::Value")
+TYPEMAP("\"double\"", "double")
+TYPEMAP("\"DenseElementsAttr\"", "mlir::DenseElementsAttr")
+
+
+#undef TYPEMAP

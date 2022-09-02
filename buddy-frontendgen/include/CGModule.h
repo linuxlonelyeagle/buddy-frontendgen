@@ -10,10 +10,14 @@ class CGModule {
   Terminators &terminators;
   Module *module;
   llvm::raw_fd_ostream &os;
+  llvm::StringMap<llvm::StringRef> typeMap;
 
 public:
   CGModule(Module *module, llvm::raw_fd_ostream &os, Terminators &terminators)
-      : module(module), os(os), terminators(terminators) {}
+      : module(module), os(os), terminators(terminators) { initTypeMap();}
+  void initTypeMap();
+  void lookTypeMap();
+  llvm::StringRef findType(llvm::StringRef key);
   void emitAST();
   void emitAntlr(llvm::StringRef grammarName);
   void emit(const std::vector<Rule *> &rules);
@@ -32,7 +36,10 @@ public:
   void emitMLIRVisitor(llvm::StringRef grammarName);
   void emitClass(llvm::StringRef grammarName);
   void emitRuleVisitor(llvm::StringRef grammarName, Rule* rule);
-  void emitBuilder(Rule* rule);
+  void emitBuilders(Rule* rule);
+  void emitBuilder(llvm::StringRef buildrOp, int index);
+  Op* findOp(llvm::StringRef opName);
+  void emitOp(Op* op, int index);
 };
 } // namespace frontendgen
 

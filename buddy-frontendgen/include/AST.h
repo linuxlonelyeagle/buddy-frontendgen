@@ -33,8 +33,8 @@ class GeneratorAndOthers {
   llvm::SmallVector<llvm::StringRef, 4> builderNames;
   llvm::SmallVector<int> builderIdxs; 
   public:
-  void setbuilderNames(llvm::SmallVector<llvm::StringRef, 4> builderNames) { this->builderNames = builderNames; } 
-  void setbuilderIdxs(llvm::SmallVector<int> builderIdxs) { this->builderIdxs = builderIdxs; }
+  void setbuilderNames(llvm::SmallVector<llvm::StringRef, 4> &builderNames) { this->builderNames = builderNames; } 
+  void setbuilderIdxs(llvm::SmallVector<int> &builderIdxs) { this->builderIdxs = builderIdxs; }
   std::vector<AntlrBase*>& getGenerator() { return generator; }
   llvm::SmallVector<llvm::StringRef,4> getBuilderNames() { return this->builderNames; }
   llvm::SmallVector<int> getbulderIdxs() { return this->builderIdxs; }
