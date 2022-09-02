@@ -1,13 +1,33 @@
-#ifndef TYPEMAP
-#define TYPEMAP(key, value)
+#ifndef CPPMAP
+#define CPPMAP(key, value)
 #endif
-TYPEMAP("\"StringRef\"", "llvm::StringRef")
-TYPEMAP("\"ArrayRef<Value>\"", "llvm::ArrayRef<Value>")
-TYPEMAP("\"FunctionType\"", "llvm::FunctionType")
-TYPEMAP("\"ArrayRef<NamedAttribute>\"", "llvm::ArrayRef<NamedAttribute>")
-TYPEMAP("\"Value\"", "mlir::Value")
-TYPEMAP("\"double\"", "double")
-TYPEMAP("\"DenseElementsAttr\"", "mlir::DenseElementsAttr")
 
+#ifndef ARGUMENTSMAP
+#define ARGUMENTSMAP(key, value)
+#endif
+
+#ifndef RESULTSMAP
+#define RESULTSMAP(key, value)
+#endif
+
+CPPMAP("\"StringRef\"", "llvm::StringRef")
+CPPMAP("\"ArrayRef<Value>\"", "llvm::ArrayRef<Value>")
+CPPMAP("\"FunctionType\"", "llvm::FunctionType")
+CPPMAP("\"ArrayRef<NamedAttribute>\"", "llvm::ArrayRef<NamedAttribute>")
+CPPMAP("\"Value\"", "mlir::Value")
+CPPMAP("\"double\"", "double")
+CPPMAP("\"DenseElementsAttr\"", "mlir::DenseElementsAttr")
+
+ARGUMENTSMAP("F64ElementsAttr", "mlir::Value")
+ARGUMENTSMAP("F64Tensor", "mlir::Value")
+ARGUMENTSMAP("Variadic<F64Tensor>", "mlir::Value")
+ARGUMENTSMAP("SymbolNameAttr", "llvm::StringRef")
+ARGUMENTSMAP("TypeAttrOf<FunctionType>", "mlir::FunctionType")
+
+RESULTSMAP("StaticShapeTensorOf<[F64]>", "mlir::Type")
+RESULTSMAP("F64Tensor", "mlir::Type")
 
 #undef TYPEMAP
+#undef ARGUMENTSMAP
+#undef RESULTSMAP
+

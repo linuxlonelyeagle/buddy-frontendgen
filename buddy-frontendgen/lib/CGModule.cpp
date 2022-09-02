@@ -2,6 +2,8 @@
 #include "llvm/Support/Casting.h"
 
 using namespace frontendgen;
+
+
 /// Emit the ast,currently only antlr's ast are supported.
 void CGModule::emitAST() {
   for (auto i : module->getRules()) {
@@ -309,9 +311,6 @@ void CGModule::emitBuilders(Rule *rule) {
         generatorAndOthers->getBuilderNames();
     llvm::SmallVector<int> indexs = generatorAndOthers->getbulderIdxs();
     int size = builderOpNames.size();
-    for (auto i = 0; i < size; i ++) {
-      llvm::outs() << "das " <<  builderOpNames[i] << " " << indexs[i] << "\n";
-    }
     for (int start = 0; start < size; start++)
       emitBuilder(builderOpNames[start], indexs[start]);
   }
@@ -351,9 +350,8 @@ void CGModule::emitOp(Op *op, int index) {
 
     llvm::SmallVector<llvm::StringRef> opArgments;
     for (size_t index = 0; index < resOperands.size(); index++) {
-      if (resOperands[index] == "F64Tensor" || resOperands[index] == "StaticShapeTensorOf<[F64]>") {
-        if (resOperands[index] == "F64Tensor" || resOperands[index] == "StaticShapeTensorOf<[F64]>" )
-          os << "  mlir::Type ";
+      if (!typeMap.findResultsMap(resOperands[index]).empty()) {
+        os << "  " << typeMap.findResultsMap(resOperands[index]) << " ";
         if (!resOperandNames[index].empty()) {
           os << resOperandNames[index] << ";\n";
           opArgments.push_back(resOperandNames[index]);
@@ -369,16 +367,8 @@ void CGModule::emitOp(Op *op, int index) {
     }
 
     for (size_t index = 0; index < argOperands.size(); index++) {
-      if (argOperands[index] == "F64ElementsAttr" ||
-          argOperands[index] == "F64Tensor" ||
-          argOperands[index] == "TypeAttrOf<FunctionType>" ||
-          argOperands[index] == "SymbolNameAttr") {
-        if (argOperands[index] == "F64Tensor" || argOperands[index] == "F64ElementsAttr")
-          os << "  mlir::Value ";
-        else if (argOperands[index] == "TypeAttrOf<FunctionType>")
-          os << "  mlir::FunctionType ";
-        else if (argOperands[index] == "SymbolNameAttr")
-          os << "  llvm::StringRef ";
+      if (!typeMap.findArgumentMap(argOperands[index]).empty()) {
+        os << "  " << typeMap.findArgumentMap(argOperands[index]) << " ";
         if (!argOperandNames[index].empty()) {
           os << argOperandNames[index] << ";\n";
           opArgments.push_back(argOperandNames[index]);
@@ -415,8 +405,8 @@ void CGModule::emitOp(Op *op, int index) {
         op->getBuilders()[index]->getDag()->getOperandNames();
     llvm::SmallVector<llvm::StringRef> opArguments;
     for (size_t index = 0; index < operands.size(); index++) {
-      if (!findType(operands[index]).empty())
-        os << "  " << findType(operands[index]);
+      if (!typeMap.findCppMap(operands[index]).empty())
+        os << "  " << typeMap.findCppMap(operands[index]);
       else
         os << "  " << operands[index];   // 如果在typemap中没有找到，那就默认输出tablegen里面的类型
       if (!operandNames[index].empty()) {
@@ -445,19 +435,20 @@ void CGModule::emitOp(Op *op, int index) {
   }
 }
 
-void CGModule::initTypeMap() {
-#define TYPEMAP(key, map) typeMap.insert(std::pair(key, map));
-#include "TypeMap.def"
-}
-
-void CGModule::lookTypeMap() {
-  for (auto start = typeMap.begin(); start != typeMap.end(); ++start) {
-    llvm::outs() << start->first() << " " << start->second << "\n";
-  }
-}
-
-llvm::StringRef CGModule::findType(llvm::StringRef key) {
-  if (typeMap.find(key) == typeMap.end())
+llvm::StringRef TypeMap::findCppMap(llvm::StringRef key) {
+  if (cppMap.find(key) == cppMap.end()) 
     return llvm::StringRef();
-  return typeMap[key];
+  return cppMap[key];
+}
+
+llvm::StringRef TypeMap::findArgumentMap(llvm::StringRef key) {
+  if (argmentsMap.find(key) == argmentsMap.end())
+    return llvm::StringRef();
+  return argmentsMap[key];
+}
+
+llvm::StringRef TypeMap::findResultsMap(llvm::StringRef key) {
+  if (resultsMap.find(key) == resultsMap.end())
+    return llvm::StringRef();
+  return resultsMap[key];
 }

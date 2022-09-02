@@ -5,19 +5,31 @@
 #include "Terminator.h"
 #include "llvm/Support/raw_ostream.h"
 namespace frontendgen {
+class TypeMap{
+  llvm::StringMap<llvm::StringRef> cppMap;
+  llvm::StringMap<llvm::StringRef> argmentsMap;
+  llvm::StringMap<llvm::StringRef> resultsMap;
+  public:
+  TypeMap() {
+    #define CPPMAP(key, value) cppMap.insert(std::pair(key, value));
+    #define RESULTSMAP(key, value) resultsMap.insert(std::pair(key, value));
+    #define ARGUMENTSMAP(key, value) argmentsMap.insert(std::pair(key, value));
+    #include "TypeMap.def"
+  } 
+  llvm::StringRef findCppMap(llvm::StringRef value);
+  llvm::StringRef findArgumentMap(llvm::StringRef value);
+  llvm::StringRef findResultsMap(llvm::StringRef value);
+};
+
 /// The class for code generation.
 class CGModule {
   Terminators &terminators;
   Module *module;
   llvm::raw_fd_ostream &os;
-  llvm::StringMap<llvm::StringRef> typeMap;
-
+  TypeMap typeMap;
 public:
   CGModule(Module *module, llvm::raw_fd_ostream &os, Terminators &terminators)
-      : module(module), os(os), terminators(terminators) { initTypeMap();}
-  void initTypeMap();
-  void lookTypeMap();
-  llvm::StringRef findType(llvm::StringRef key);
+      : module(module), os(os), terminators(terminators) { }
   void emitAST();
   void emitAntlr(llvm::StringRef grammarName);
   void emit(const std::vector<Rule *> &rules);
