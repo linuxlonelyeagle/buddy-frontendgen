@@ -140,6 +140,8 @@ void CGModule::emitOps() {
     os << "> { \n";
     if (!op->getSummary().empty())
       os << "  let summary = " << op->getSummary() << ";\n";
+    if (!op->getDescription().empty())
+      os << "  let description = " << op->getDescription() << ";\n";
     if (op->getArguments()) {
       DAG *dag = op->getArguments();
       auto operands = dag->getOperands();
@@ -174,12 +176,9 @@ void CGModule::emitOps() {
       }
       os << ");\n";
     }
-    if (op->getHasConstantMaterializer())
-      os << "  let hasCustomAssemblyFormat = 1;\n";
-    if (op->getHasVerifier())
-      os << "  let hasVerifier = 1;\n";
-    if (!op->getDescription().empty())
-      os << "  let description = " << op->getDescription() << ";\n";
+    if (!op->getRegions().empty())
+      os << "  let regions = " << op->getRegions() << ";\n";
+    
     if (!op->getBuilders().empty()) {
       os << "  let builders = [\n";
       std::vector<Builder *> builders = op->getBuilders();
@@ -211,14 +210,16 @@ void CGModule::emitOps() {
     if (!op->getExtraClassDeclaration().empty())
       os << "  let extraClassDeclaration = " << op->getExtraClassDeclaration()
          << ";\n";
+    if (op->getHasVerifier())
+      os << "  let hasVerifier = 1;\n"; 
     if (op->getSkipDefaultBuilders())
-      os << "  let  skipDefaultBuilders = 1;\n";
-    if (!op->getRegions().empty())
-      os << "  let regions = " << op->getRegions() << ";\n";
+      os << "  let skipDefaultBuilders = 1;\n";
     if (op->getHasCanonicalizer())
       os << "  let hasCanonicalizer = 1;\n";
     if (!op->getAssemblyFormat().empty())
       os << "  let assemblyFormat = " << op->getAssemblyFormat() << ";\n";
+    if (op->getHasConstantMaterializer())
+      os << "  let hasCustomAssemblyFormat = 1;\n";
     os << "}\n\n";
   }
 }
@@ -311,15 +312,17 @@ void CGModule::emitBuilders(Rule *rule) {
         generatorAndOthers->getBuilderNames();
     llvm::SmallVector<int> indexs = generatorAndOthers->getbulderIdxs();
     int size = builderOpNames.size();
-    for (int start = 0; start < size; start++)
+    for (int start = 0; start < size; start++) 
       emitBuilder(builderOpNames[start], indexs[start]);
   }
 }
 
 void CGModule::emitBuilder(llvm::StringRef builderOp, int index) {
   Op *op = findOp(builderOp);
-  if (op == nullptr)
+  if (op == nullptr) {
+    llvm::errs() << builderOp << " is undefined!\n";
     return;
+  }
   emitOp(op, index);
 }
 
@@ -382,7 +385,7 @@ void CGModule::emitOp(Op *op, int index) {
         return;
       }
     }
-
+    os << "  mlir::Location location;\n";
     llvm::StringRef cppNameSpace(
         module->getDialect()->getCppNamespace().data() + 1,
         module->getDialect()->getCppNamespace().size() - 2);
@@ -417,6 +420,7 @@ void CGModule::emitOp(Op *op, int index) {
         opArguments.push_back("arg" + std::to_string(index));
       }
     }
+    os << "  mlir::Location location;\n";
     llvm::StringRef cppNameSpace(
         module->getDialect()->getCppNamespace().data() + 1,
         module->getDialect()->getCppNamespace().size() - 2);

@@ -328,7 +328,7 @@ bool Parser::parserOp(std::vector<Op *> &ops, llvm::StringRef opName) {
       advance();
       if (!consume(tokenKinds::equal))
         return false;
-      if (!consumeNoAdvance(tokenKinds::number)) {
+      if (consumeNoAdvance(tokenKinds::number)) {
         if (token.getContent() == "1")
           hasVerifier = true;
       }
