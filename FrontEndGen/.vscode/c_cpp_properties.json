@@ -5,10 +5,11 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/home/sen/new_buddy3/llvm/llvm/include",
-                "/home/sen/new_buddy3/tools/buddy-frontendgen/include",
                 "/home/sen/new_buddy3/llvm/build/include",
                 "/home/sen/new_buddy3/llvm/mlir/include",
-                "/home/sen/new_buddy3/llvm/mlir/examples/toy/Ch6/include"
+                "/home/sen/new_buddy3/build/examples/FrontEndGen/include",
+                "/home/sen/new_buddy3/llvm/mlir/examples/toy/Ch6/include",
+                "/home/sen/new_buddy3/build/examples/FrontEndGen/antlr4cpp_generated_src/Toy"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

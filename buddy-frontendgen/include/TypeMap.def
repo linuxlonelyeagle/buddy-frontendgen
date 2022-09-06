@@ -23,7 +23,7 @@ ARGUMENTSMAP("F64Tensor", "mlir::Value")
 ARGUMENTSMAP("Variadic<F64Tensor>", "mlir::Value")
 ARGUMENTSMAP("SymbolNameAttr", "llvm::StringRef")
 ARGUMENTSMAP("TypeAttrOf<FunctionType>", "mlir::FunctionType")
-
+ARGUMENTSMAP("F64MemRef", "mlir::Value")
 RESULTSMAP("StaticShapeTensorOf<[F64]>", "mlir::Type")
 RESULTSMAP("F64Tensor", "mlir::Type")
 

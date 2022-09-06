@@ -79,10 +79,17 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
     }
     delete rule;
   }
+
   for (auto* opinterface : module->getOpInterfaces())
     delete opinterface;
   delete module->getDialect();
   for (auto op : module->getOps()) {
+    delete op->getArguments();
+    delete op->getResults();
+    for (auto builder : op->getBuilders()) {
+      delete builder->getDag();
+      delete builder;
+    }
     delete op;
   }
   delete module;

@@ -24,8 +24,12 @@ tensorLiteral
   | Number 
   ;
 
-varDecl
-  : Var Identifier (type )?(Equal expression )?
+varDecl returns [std::string idName]
+  : Var Identifier (type)? (Equal expression)?
+    {
+    // Record the identifier string to `idName` member.
+    $idName = $Identifier.text;
+    }
   ;
 
 type
@@ -37,7 +41,7 @@ funDefine
   ;
 
 prototype
-  : Def Identifier ParentheseOpen declList ?ParentheseClose 
+  : Def Identifier ParentheseOpen declList? ParentheseClose 
   ;
 
 declList
@@ -60,19 +64,16 @@ Return
   ;
 
 ParentheseOpen
-  : ')'
+  : '('
   ;
 
 SbracketOpen
   : '['
   ;
 
-Identifier
-  : [a-zA-Z][a-zA-Z0-9_]*
-  ;
 
 ParentheseClose
-  : '('
+  : ')'
   ;
 
 SbracketClose
@@ -125,6 +126,10 @@ Equal
 
 AngleBracketClose
   : '>'
+  ;
+
+Identifier
+  : [a-zA-Z][a-zA-Z0-9_]*
   ;
 
 WS

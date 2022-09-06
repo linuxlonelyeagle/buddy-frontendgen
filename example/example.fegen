@@ -13,11 +13,11 @@ opinterface ShapeInferenceOpInterface
 
 dialect Toy_Dialect 
   : name = "toy" 
-  : cppNamespace = "::mlir::toy"
+  : cppNamespace = "mlir::toy"
   : emitAccessorPrefix = kEmitAccessorPrefix_Prefixed
   ;
 
-op ConsantOp 
+op ConstantOp 
   : mnemonic = "consant" 
   : traits = [NoSideEffect]
   : summary = "consant" 
@@ -59,6 +59,22 @@ op FuncOp
     DeclareOpInterfaceMethods<CallableOpInterface>, FunctionOpInterface,
     IsolatedFromAbove, Symbol
   ]
+  : summary = "user defined function operation"
+  : description = [{
+    The "toy.func" operation represents a user defined function. These are
+    callable SSA-region operations that contain toy computations.
+
+    Example:
+
+    ```mlir
+    toy.func @main() {
+      %0 = toy.constant dense<5.500000e+00> : tensor<f64>
+      %1 = toy.reshape(%0 : tensor<f64>) to tensor<2x2xf64>
+      toy.print %1 : tensor<2x2xf64>
+      toy.return
+    }
+    ```
+  }]
   : arguments = (ins
     SymbolNameAttr:$sym_name,
     TypeAttrOf<FunctionType>:$function_type
@@ -68,10 +84,16 @@ op FuncOp
     "StringRef":$name, "FunctionType":$type,
     CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)>]
   : extraClassDeclaration = [{
+    //===------------------------------------------------------------------===//
+    // FunctionOpInterface Methods
+    //===------------------------------------------------------------------===//
+
     /// Returns the argument types of this function.
     ArrayRef<Type> getArgumentTypes() { return getFunctionType().getInputs(); }
+
     /// Returns the result types of this function.
-    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }}]
+    ArrayRef<Type> getResultTypes() { return getFunctionType().getResults(); }
+  }]
    : hasCustomAssemblyFormat = 1
    : skipDefaultBuilders = 1
    ;
@@ -90,11 +112,11 @@ op MulOp
 
 op PrintOp
   : mnemonic = "print"
-  : arguments = (ins F64Tensor:$input)
+  : arguments = (ins AnyTypeOf<[F64Tensor, F64MemRef]>:$input)
   : assemblyFormat = "$input attr-dict `:` type($input)"
   ;
 
-op Reshape 
+op ReshapeOp 
     : mnemonic = "reshape" 
     : traits = [NoSideEffect]
     : arguments = (ins F64Tensor : $input)
@@ -119,14 +141,42 @@ op ReturnOp
   : hasVerifier = 1
   ;
 
+op GenericCallOp
+  : mnemonic = "generic_call"
+  : traits = [DeclareOpInterfaceMethods<CallOpInterface>]
+  : summary = "generic call operation"
+  : arguments = (ins FlatSymbolRefAttr:$callee, Variadic<F64Tensor>:$inputs)
+  : results = (outs F64Tensor)
+  : assemblyFormat = [{
+    $callee `(` $inputs `)` attr-dict `:` functional-type($inputs, results)
+  }]
+  : builders = [
+    OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$arguments)>
+  ]
+  ;
+
+op TransposeOp
+  : mnemonic = "transpose"
+  : traits = [NoSideEffect, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]
+  : arguments = (ins F64Tensor:$input)
+  : results = (outs F64Tensor)
+  : hasCanonicalizer = 1
+  : builders = [
+    OpBuilder<(ins "Value":$input)>
+  ]
+  : hasVerifier = 1
+  ;
+
+
 rule module 
    : funDefine 
    ;
 
 rule expression 
   : Number 
-  : tensorLiteral
+  : tensorLiteral 
   : identifierExpr 
+  : expression Add expression 
   ;
 
 rule returnExpr 
@@ -135,16 +185,20 @@ rule returnExpr
 
 rule identifierExpr 
   : Identifier
-  : Identifier ParentheseOpen (expression (Comma expression) *)? ParentheseClose
+  : Identifier ParentheseOpen (expression (Comma expression) *)? ParentheseClose {
+    builder = GenericCallOp_1, PrintOp_0
+  }
   ;
 
 rule tensorLiteral 
-  : SbracketOpen ( tensorLiteral ( Comma tensorLiteral ) *) ? SbracketClose
-  : Number
+  : SbracketOpen ( tensorLiteral ( Comma tensorLiteral ) *) ? SbracketClose 
+  : Number 
   ;
 
 rule varDecl 
-  : Var Identifier(type) ? (Equal expression) ? 
+  : Var Identifier (type) ? (Equal expression) ? {
+    builder = ReshapeOp_0 
+  }
   ;
 
 rule type 
@@ -152,11 +206,15 @@ rule type
   ;
 
 rule funDefine 
-  : prototype block
+  : prototype block {
+    builder = ReturnOp_1  
+  }
   ;
 
 rule prototype 
-  : Def Identifier ParentheseOpen declList ? ParentheseClose
+  : Def Identifier ParentheseOpen declList ? ParentheseClose {
+    builder = FuncOp_0  
+  }
   ;
 
 rule declList 
@@ -169,9 +227,7 @@ rule block
   ;
 
 rule blockExpr 
-  : varDecl {
-    builder = ConstantOp_1, ConstantOp_2 
-  }
+  : varDecl
   : returnExpr 
   : expression
   ;

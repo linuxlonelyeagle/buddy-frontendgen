@@ -1,0 +1,17 @@
+{
+  "files.associations": {
+    "*.inc": "cpp",
+    "*.def": "cpp",
+    "istream": "cpp",
+    "functional": "cpp",
+    "array": "cpp",
+    "tuple": "cpp",
+    "utility": "cpp",
+    "variant": "cpp",
+    "any": "cpp",
+    "deque": "cpp",
+    "list": "cpp",
+    "vector": "cpp",
+    "string_view": "cpp"
+  }
+}

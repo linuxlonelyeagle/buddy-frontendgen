@@ -199,6 +199,9 @@ void CGModule::emitOps() {
             os << ",";
           number++;
         }
+        if (!(*start)->getCode().empty()) 
+          os << "), " << (*start)->getCode() <<">";
+        else
         os << ")>";
         if (start + 1 != builders.end())
           os << ",\n";
@@ -273,8 +276,12 @@ void CGModule::emitIncludes(llvm::StringRef grammarName) {
 }
 
 void CGModule::emitClass(llvm::StringRef gramarName) {
-  os << "class MLIRToy" << gramarName << "Visitor : public " << gramarName
+  os << "class MLIR" << gramarName << "Visitor : public " << gramarName
      << "BaseVisitor {\n";
+
+  os << "mlir::ModuleOp theModule;\n";
+  os << "mlir::OpBuilder builder;\n";
+  os << "std::string fileName;\n\n";
 
   os << "public:\n";
   os << "MLIR" << gramarName
@@ -284,15 +291,12 @@ void CGModule::emitClass(llvm::StringRef gramarName) {
         "\n}\n\n";
   os << "mlir::ModuleOp getModule() { return theModule; }\n\n";
 
-  os << "private:\n";
-  os << "mlir::ModuleOp theModule;\n";
-  os << "mlir::OpBuilder builder;\n";
-  os << "std::string fileName;\n\n";
+  
   auto rules = module->getRules();
   for (auto rule : rules) {
     emitRuleVisitor(gramarName, rule);
   }
-  os << "}\n";
+  os << "};\n";
 }
 
 void CGModule::emitRuleVisitor(llvm::StringRef grammarName, Rule *rule) {
@@ -350,7 +354,7 @@ void CGModule::emitOp(Op *op, int index) {
       resOperands = result->getOperands();
       resOperandNames = result->getOperandNames();
     }
-
+    os << "  {\n";
     llvm::SmallVector<llvm::StringRef> opArgments;
     for (size_t index = 0; index < resOperands.size(); index++) {
       if (!typeMap.findResultsMap(resOperands[index]).empty()) {
@@ -363,12 +367,42 @@ void CGModule::emitOp(Op *op, int index) {
           llvm::StringRef arg("res" + std::to_string(index));
           opArgments.push_back(arg);
         }
+      } else if (resOperands[index].startswith("AnyTypeOf")) {
+        llvm::StringRef operand = resOperands[index];
+        int start = operand.find('[') + 1;
+        int end = operand.find(']');
+        int cur = start;
+        if (start == std::string::npos || end == std::string::npos) {
+          return;
+        }
+        llvm::StringRef type;
+        while (cur <= end) {
+          if (operand[cur] == ',' || cur == end) {
+            std::string str(operand, start, cur - start);
+            str.erase(0, str.find_first_not_of(" "));
+            str.erase(str.find_last_not_of(" ") + 1);
+            if (typeMap.findResultsMap(str).empty()) {
+              llvm::errs() << str << " in " << op->getOpName() << " in results is not supported.\n";
+            }
+            type = typeMap.findResultsMap(str);
+            start = cur + 1;
+          }
+          cur++;
+        }
+        os << "  " << type << " ";
+        if (!resOperandNames[index].empty()) {
+          os << resOperandNames[index] << ";\n";
+          opArgments.push_back(resOperandNames[index]);
+        } else {
+          os << "res" << index << ";\n";
+          llvm::StringRef arg("res" + std::to_string(index));
+          opArgments.push_back(arg);
+        }
       } else {
-        llvm::errs() << resOperands[index] << "in" << op->getOpName() << "is not supported.\n";
+        llvm::errs() << resOperands[index] << " in " << op->getOpName() << " in results is not supported.\n";
         return;
       }
     }
-
     for (size_t index = 0; index < argOperands.size(); index++) {
       if (!typeMap.findArgumentMap(argOperands[index]).empty()) {
         os << "  " << typeMap.findArgumentMap(argOperands[index]) << " ";
@@ -380,8 +414,39 @@ void CGModule::emitOp(Op *op, int index) {
           llvm::StringRef arg("arg" + std::to_string(index));
           opArgments.push_back(arg);
         }
+      } else if (argOperands[index].startswith("AnyTypeOf")) {
+        llvm::StringRef operand = argOperands[index];
+        int start = operand.find('[') + 1;
+        int end = operand.find(']');
+        int cur = start;
+        if (start == std::string::npos || end == std::string::npos) {
+          return;
+        }
+        llvm::StringRef type;
+        while (cur <= end) {
+          if (operand[cur] == ',' || cur == end) {
+            std::string str(operand, start, cur - start);
+            str.erase(0, str.find_first_not_of(" "));
+            str.erase(str.find_last_not_of(" ") + 1);
+            if (typeMap.findArgumentMap(str).empty()) {
+              llvm::errs() << str << " in " << op->getOpName() << " in arguments is not supported.\n";
+            }
+            start = cur + 1;
+            type = typeMap.findArgumentMap(str);
+          }
+          cur++;
+        }
+        os << "  " << type << " ";
+        if (!argOperandNames[index].empty()) {
+          os << argOperandNames[index] << ";\n";
+          opArgments.push_back(argOperandNames[index]);
+        } else {
+          os << "arg" << index << ";\n";
+          llvm::StringRef arg("arg" + std::to_string(index));
+          opArgments.push_back(arg);
+        }
       } else {
-        llvm::errs() << argOperands[index] << "in" << op->getOpName() << "is not supported.\n";
+        llvm::errs() << argOperands[index] << " in " << op->getOpName() << " in arguments is not supported.\n";
         return;
       }
     }
@@ -399,7 +464,8 @@ void CGModule::emitOp(Op *op, int index) {
       if (index + 1 != opArgments.size())
         os << ", ";
     }
-    os << ");\n\n";
+    os << ");\n";
+    os << "  }\n\n";
   } else if (index > 0) {
     index--;
     llvm::SmallVector<llvm::StringRef, 4> operands =
@@ -407,6 +473,7 @@ void CGModule::emitOp(Op *op, int index) {
     llvm::SmallVector<llvm::StringRef, 4> operandNames =
         op->getBuilders()[index]->getDag()->getOperandNames();
     llvm::SmallVector<llvm::StringRef> opArguments;
+    os << "  {\n";
     for (size_t index = 0; index < operands.size(); index++) {
       if (!typeMap.findCppMap(operands[index]).empty())
         os << "  " << typeMap.findCppMap(operands[index]);
@@ -435,7 +502,8 @@ void CGModule::emitOp(Op *op, int index) {
           os << ", ";
       }
     }
-    os << ");\n\n";
+    os << ");\n";
+    os << "  }\n\n";
   }
 }
 
