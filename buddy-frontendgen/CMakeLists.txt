@@ -8,6 +8,3 @@ frontendgenlib
 add_llvm_tool(buddy-frontendgen  
 buddy-frontendgen.cpp
 )
-
-
-
