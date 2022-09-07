@@ -18,7 +18,7 @@ dialect Toy_Dialect
   ;
 
 op ConstantOp 
-  : mnemonic = "consant" 
+  : mnemonic = "constant" 
   : traits = [NoSideEffect]
   : summary = "consant" 
   : arguments = (ins F64ElementsAttr : $value)
