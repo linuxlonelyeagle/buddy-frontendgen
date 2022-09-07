@@ -25,20 +25,20 @@ public:
   Module *parser();
   void compilEngine(Module *module);
   void parserRules(Rule *rule);
-  void parserGenerator(GeneratorAndOthers* generatorAndOthers);
+  void parserGenerator(GeneratorAndOthers *generatorAndOthers);
   void lookToken();
   AntlrBase::baseKind getAntlrBaseKind(llvm::StringRef name);
-  void parserIdentifier(GeneratorAndOthers* generatorAndOthers);
-  void parserTerminator(GeneratorAndOthers* generatorAndOthers);
-  void parserPBExpression(GeneratorAndOthers* generatorAndOthers);
+  void parserIdentifier(GeneratorAndOthers *generatorAndOthers);
+  void parserTerminator(GeneratorAndOthers *generatorAndOthers);
+  void parserPBExpression(GeneratorAndOthers *generatorAndOthers);
   void parserDialect(Dialect *&dialect, llvm::StringRef defName);
   bool parserOp(std::vector<Op *> &ops, llvm::StringRef opName);
   bool parserOpinterface(std::vector<Opinterface *> &opInterfaces);
-  void parserCurlyBracketOpen(GeneratorAndOthers* generatorAndOthers);
-  void parserDAG(DAG*& dag);
-  void parserBuilders(std::vector<Builder*>& builders);
-  void parserCode(llvm::StringRef& code);
-  void parserCArg(llvm::StringRef& operand, llvm::StringRef& value);
+  void parserCurlyBracketOpen(GeneratorAndOthers *generatorAndOthers);
+  void parserDAG(DAG *&dag);
+  void parserBuilders(std::vector<Builder *> &builders);
+  void parserCode(llvm::StringRef &code);
+  void parserCArg(llvm::StringRef &operand, llvm::StringRef &value);
 };
 } // namespace frontendgen
 

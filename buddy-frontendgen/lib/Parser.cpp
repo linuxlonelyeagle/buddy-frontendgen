@@ -450,11 +450,13 @@ void Parser::parserDAG(DAG *&arguments) {
     if (token.getContent() == "CArg") {
       parserCArg(operand, value);
     } else if (token.getContent() == "AnyTypeOf") {
-      const char* start = token.getContent().data();
+      const char *start = token.getContent().data();
       advance();
-      if (!consumeNoAdvance(tokenKinds::angleBracketOpen)) 
+      if (!consumeNoAdvance(tokenKinds::angleBracketOpen))
         return;
-      operand = llvm::StringRef(start, 9 + lexer.getEndChContent(token.getContent().data(), '>').size());
+      operand = llvm::StringRef(
+          start,
+          9 + lexer.getEndChContent(token.getContent().data(), '>').size());
       advance();
     } else if (token.is(tokenKinds::doubleQuotationMark)) {
       operand = lexer.getEndChContent(token.getContent().data(), '"');

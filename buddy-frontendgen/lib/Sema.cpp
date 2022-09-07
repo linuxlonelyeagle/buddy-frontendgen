@@ -13,7 +13,7 @@ void Sema::actOnModule(Module *module, std::vector<Rule *> &rules,
 }
 /// Set Rule's node.
 void Sema::actOnRule(Rule *rule,
-                     std::vector<GeneratorAndOthers*> &generators) {
+                     std::vector<GeneratorAndOthers *> &generators) {
   rule->setGenerators(generators);
 }
 
@@ -32,10 +32,9 @@ void Sema::actOnDialect(Dialect *dialect, llvm::StringRef defName,
 void Sema::actOnOps(std::vector<Op *> &ops, llvm::StringRef opName,
                     llvm::StringRef mnemonic, llvm::StringRef traits,
                     llvm::StringRef summary, llvm::StringRef description,
-                    DAG* arguments, DAG* results,
-                    bool hasCustomAssemblyFormat, std::vector<Builder*>& builders,
-                    bool hasVerifier, llvm::StringRef assemblyFormat,
-                    llvm::StringRef regions,
+                    DAG *arguments, DAG *results, bool hasCustomAssemblyFormat,
+                    std::vector<Builder *> &builders, bool hasVerifier,
+                    llvm::StringRef assemblyFormat, llvm::StringRef regions,
                     llvm::StringRef extraClassDeclaration,
                     bool skipDefaultBuilders, bool hasCanonicalizer) {
   Op *op = new Op();
@@ -69,6 +68,4 @@ void Sema::actOnOpInterfaces(std::vector<Opinterface *> &opInterfaces,
   opInterfaces.push_back(opInterface);
 }
 
-void Sema::actOnDag(DAG*& arguments, DAG& dag) {
-  arguments = new DAG(dag);
-}
+void Sema::actOnDag(DAG *&arguments, DAG &dag) { arguments = new DAG(dag); }

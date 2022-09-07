@@ -1,9 +1,9 @@
 #ifndef INCLUDE_AST_H
 #define INCLUDE_AST_H
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/SMLoc.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/SMLoc.h"
 #include <vector>
 namespace frontendgen {
 
@@ -29,31 +29,41 @@ public:
 };
 
 class GeneratorAndOthers {
-  std::vector<AntlrBase*> generator;
+  std::vector<AntlrBase *> generator;
   llvm::SmallVector<llvm::StringRef, 4> builderNames;
-  llvm::SmallVector<int> builderIdxs; 
-  public:
-  void setbuilderNames(llvm::SmallVector<llvm::StringRef, 4> &builderNames) { this->builderNames = builderNames; } 
-  void setbuilderIdxs(llvm::SmallVector<int> &builderIdxs) { this->builderIdxs = builderIdxs; }
-  std::vector<AntlrBase*>& getGenerator() { return generator; }
-  llvm::SmallVector<llvm::StringRef,4> getBuilderNames() { return this->builderNames; }
+  llvm::SmallVector<int> builderIdxs;
+
+public:
+  void setbuilderNames(llvm::SmallVector<llvm::StringRef, 4> &builderNames) {
+    this->builderNames = builderNames;
+  }
+  void setbuilderIdxs(llvm::SmallVector<int> &builderIdxs) {
+    this->builderIdxs = builderIdxs;
+  }
+  std::vector<AntlrBase *> &getGenerator() { return generator; }
+  llvm::SmallVector<llvm::StringRef, 4> getBuilderNames() {
+    return this->builderNames;
+  }
   llvm::SmallVector<int> getbulderIdxs() { return this->builderIdxs; }
 };
 
 /// This class is used to mark the node in the generator as a rule, and can also
 /// store the generators of a rule.
 class Rule : public AntlrBase {
-  std::vector<GeneratorAndOthers*> generatorsAndOthers;
+  std::vector<GeneratorAndOthers *> generatorsAndOthers;
+
 public:
   Rule(llvm::StringRef name, llvm::SMLoc loc, baseKind kind)
       : AntlrBase(name, loc, kind) {}
   static bool classof(const AntlrBase *base) {
     return base->getKind() == baseKind::rule;
   }
-  void setGenerators(std::vector<GeneratorAndOthers*> &generatorsAndOthers) { 
+  void setGenerators(std::vector<GeneratorAndOthers *> &generatorsAndOthers) {
     this->generatorsAndOthers = generatorsAndOthers;
   }
-  std::vector<GeneratorAndOthers*> getGeneratorsAndOthers() { return generatorsAndOthers; }
+  std::vector<GeneratorAndOthers *> getGeneratorsAndOthers() {
+    return generatorsAndOthers;
+  }
 };
 /// The class is used to mark the node in the generator as a terminator.
 class Terminator : public AntlrBase {
@@ -105,11 +115,12 @@ public:
 class DAG {
   llvm::StringRef dagOperator;
   llvm::SmallVector<llvm::StringRef, 4> operands;
-  llvm::SmallVector<llvm::StringRef, 4> operandNames; 
+  llvm::SmallVector<llvm::StringRef, 4> operandNames;
   llvm::StringMap<llvm::StringRef> values;
-  public:
-  DAG() {};
-  DAG(const DAG& dag) {
+
+public:
+  DAG(){};
+  DAG(const DAG &dag) {
     this->dagOperator = dag.dagOperator;
     this->operands = dag.operands;
     this->operandNames = dag.operandNames;
@@ -126,23 +137,28 @@ class DAG {
   llvm::StringRef findValue(llvm::StringRef operand) {
     if (values.find(operand) == values.end())
       return llvm::StringRef();
-    return values[operand]; 
+    return values[operand];
   }
   llvm::StringRef getDagOperater() { return dagOperator; }
-  void setDagOperatpr(llvm::StringRef dagOperator) { this->dagOperator = dagOperator;}
-  llvm::SmallVector<llvm::StringRef, 4> getOperands() { return operands; } 
-  llvm::SmallVector<llvm::StringRef, 4> getOperandNames() { return operandNames; } 
+  void setDagOperatpr(llvm::StringRef dagOperator) {
+    this->dagOperator = dagOperator;
+  }
+  llvm::SmallVector<llvm::StringRef, 4> getOperands() { return operands; }
+  llvm::SmallVector<llvm::StringRef, 4> getOperandNames() {
+    return operandNames;
+  }
 };
 
 class Builder {
-  DAG* dag = nullptr;
+  DAG *dag = nullptr;
   llvm::StringRef code;
-  public:
-  Builder(DAG* dag, llvm::StringRef code) {
+
+public:
+  Builder(DAG *dag, llvm::StringRef code) {
     this->dag = dag;
     this->code = code;
   }
-  DAG* getDag() { return dag; }
+  DAG *getDag() { return dag; }
   llvm::StringRef getCode() { return code; }
 };
 
@@ -153,10 +169,10 @@ class Op {
   llvm::StringRef traits;
   llvm::StringRef summary;
   llvm::StringRef description;
-  DAG* arguments;
-  DAG* results;
+  DAG *arguments;
+  DAG *results;
   bool hasCustomAssemblyFormat;
-  std::vector<Builder*> builders;
+  std::vector<Builder *> builders;
   bool hasVerifier;
   llvm::StringRef assemblyFormat;
   llvm::StringRef regions;
@@ -170,10 +186,10 @@ public:
   llvm::StringRef getTraits() { return traits; }
   llvm::StringRef getSummary() { return summary; }
   llvm::StringRef getDescription() { return description; }
-  DAG* getArguments() { return arguments; }
-  DAG* getResults() { return results; }
+  DAG *getArguments() { return arguments; }
+  DAG *getResults() { return results; }
   bool getHasConstantMaterializer() { return hasCustomAssemblyFormat; }
-  std::vector<Builder*> getBuilders() { return builders; }
+  std::vector<Builder *> getBuilders() { return builders; }
   bool getHasVerifier() { return hasVerifier; }
   llvm::StringRef getRegions() { return regions; }
   llvm::StringRef getAssemblyFormat() { return assemblyFormat; }
@@ -188,12 +204,14 @@ public:
     this->description = description;
   }
   void setSummary(llvm::StringRef summary) { this->summary = summary; }
-  void setArguments(DAG* arguments) { this->arguments = arguments; }
-  void setResults(DAG* results) { this->results = results; }
+  void setArguments(DAG *arguments) { this->arguments = arguments; }
+  void setResults(DAG *results) { this->results = results; }
   void setHasCustomAssemblyFormat(bool hasCustomAssemblyFormat) {
     this->hasCustomAssemblyFormat = hasCustomAssemblyFormat;
   }
-  void setBuilders(std::vector<Builder*>& builders) { this->builders = builders; }
+  void setBuilders(std::vector<Builder *> &builders) {
+    this->builders = builders;
+  }
   void setHasVerifier(bool hasVerifier) { this->hasVerifier = hasVerifier; }
   void setAssemblyFormat(llvm::StringRef assemblyFormat) {
     this->assemblyFormat = assemblyFormat;

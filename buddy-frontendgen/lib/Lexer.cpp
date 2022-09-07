@@ -102,7 +102,7 @@ void Lexer::next(Token &token) {
   } else if (*curPtr == '<') {
     formToken(token, curPtr + 1, tokenKinds::angleBracketOpen);
     return;
-  } else if (*curPtr == '>') { 
+  } else if (*curPtr == '>') {
     formToken(token, curPtr + 1, tokenKinds::angleBracketClose);
     return;
   } else if (*curPtr == '[') {
@@ -172,9 +172,9 @@ llvm::StringRef Lexer::getMarkContent(std::string start, std::string end) {
   return content;
 }
 
-llvm::StringRef Lexer::getEndChContent(const char* start, char ch) {
-  const char* endPtr = curPtr;
-  while (*endPtr != ch) 
+llvm::StringRef Lexer::getEndChContent(const char *start, char ch) {
+  const char *endPtr = curPtr;
+  while (*endPtr != ch)
     endPtr++;
   endPtr++;
   curPtr = endPtr;

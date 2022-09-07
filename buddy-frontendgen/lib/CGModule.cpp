@@ -3,7 +3,6 @@
 
 using namespace frontendgen;
 
-
 /// Emit the ast,currently only antlr's ast are supported.
 void CGModule::emitAST() {
   for (auto i : module->getRules()) {
@@ -178,7 +177,7 @@ void CGModule::emitOps() {
     }
     if (!op->getRegions().empty())
       os << "  let regions = " << op->getRegions() << ";\n";
-    
+
     if (!op->getBuilders().empty()) {
       os << "  let builders = [\n";
       std::vector<Builder *> builders = op->getBuilders();
@@ -199,10 +198,10 @@ void CGModule::emitOps() {
             os << ",";
           number++;
         }
-        if (!(*start)->getCode().empty()) 
-          os << "), " << (*start)->getCode() <<">";
+        if (!(*start)->getCode().empty())
+          os << "), " << (*start)->getCode() << ">";
         else
-        os << ")>";
+          os << ")>";
         if (start + 1 != builders.end())
           os << ",\n";
         else
@@ -214,7 +213,7 @@ void CGModule::emitOps() {
       os << "  let extraClassDeclaration = " << op->getExtraClassDeclaration()
          << ";\n";
     if (op->getHasVerifier())
-      os << "  let hasVerifier = 1;\n"; 
+      os << "  let hasVerifier = 1;\n";
     if (op->getSkipDefaultBuilders())
       os << "  let skipDefaultBuilders = 1;\n";
     if (op->getHasCanonicalizer())
@@ -291,7 +290,6 @@ void CGModule::emitClass(llvm::StringRef gramarName) {
         "\n}\n\n";
   os << "mlir::ModuleOp getModule() { return theModule; }\n\n";
 
-  
   auto rules = module->getRules();
   for (auto rule : rules) {
     emitRuleVisitor(gramarName, rule);
@@ -316,7 +314,7 @@ void CGModule::emitBuilders(Rule *rule) {
         generatorAndOthers->getBuilderNames();
     llvm::SmallVector<int> indexs = generatorAndOthers->getbulderIdxs();
     int size = builderOpNames.size();
-    for (int start = 0; start < size; start++) 
+    for (int start = 0; start < size; start++)
       emitBuilder(builderOpNames[start], indexs[start]);
   }
 }
@@ -382,7 +380,8 @@ void CGModule::emitOp(Op *op, int index) {
             str.erase(0, str.find_first_not_of(" "));
             str.erase(str.find_last_not_of(" ") + 1);
             if (typeMap.findResultsMap(str).empty()) {
-              llvm::errs() << str << " in " << op->getOpName() << " in results is not supported.\n";
+              llvm::errs() << str << " in " << op->getOpName()
+                           << " in results is not supported.\n";
             }
             type = typeMap.findResultsMap(str);
             start = cur + 1;
@@ -399,7 +398,8 @@ void CGModule::emitOp(Op *op, int index) {
           opArgments.push_back(arg);
         }
       } else {
-        llvm::errs() << resOperands[index] << " in " << op->getOpName() << " in results is not supported.\n";
+        llvm::errs() << resOperands[index] << " in " << op->getOpName()
+                     << " in results is not supported.\n";
         return;
       }
     }
@@ -429,7 +429,8 @@ void CGModule::emitOp(Op *op, int index) {
             str.erase(0, str.find_first_not_of(" "));
             str.erase(str.find_last_not_of(" ") + 1);
             if (typeMap.findArgumentMap(str).empty()) {
-              llvm::errs() << str << " in " << op->getOpName() << " in arguments is not supported.\n";
+              llvm::errs() << str << " in " << op->getOpName()
+                           << " in arguments is not supported.\n";
             }
             start = cur + 1;
             type = typeMap.findArgumentMap(str);
@@ -446,7 +447,8 @@ void CGModule::emitOp(Op *op, int index) {
           opArgments.push_back(arg);
         }
       } else {
-        llvm::errs() << argOperands[index] << " in " << op->getOpName() << " in arguments is not supported.\n";
+        llvm::errs() << argOperands[index] << " in " << op->getOpName()
+                     << " in arguments is not supported.\n";
         return;
       }
     }
@@ -478,7 +480,9 @@ void CGModule::emitOp(Op *op, int index) {
       if (!typeMap.findCppMap(operands[index]).empty())
         os << "  " << typeMap.findCppMap(operands[index]);
       else
-        os << "  " << operands[index];   // 如果在typemap中没有找到，那就默认输出tablegen里面的类型
+        os << "  "
+           << operands
+                  [index]; // 如果在typemap中没有找到，那就默认输出tablegen里面的类型
       if (!operandNames[index].empty()) {
         os << " " << operandNames[index] << ";\n";
         opArguments.push_back(operandNames[index]);
@@ -508,7 +512,7 @@ void CGModule::emitOp(Op *op, int index) {
 }
 
 llvm::StringRef TypeMap::findCppMap(llvm::StringRef key) {
-  if (cppMap.find(key) == cppMap.end()) 
+  if (cppMap.find(key) == cppMap.end())
     return llvm::StringRef();
   return cppMap[key];
 }

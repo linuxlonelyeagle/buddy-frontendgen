@@ -20,7 +20,8 @@ llvm::cl::opt<Action> emitAction(
     llvm::cl::values(clEnumValN(dumpAst, "ast", "Out put the ast")),
     llvm::cl::values(clEnumValN(dumpAntlr, "antlr", "Out put the antlr file")),
     llvm::cl::values(clEnumValN(dumpTd, "td", "Out put the td file")),
-    llvm::cl::values(clEnumValN(dumpVisitor, "visitor", "Out put the visitor file")),
+    llvm::cl::values(clEnumValN(dumpVisitor, "visitor",
+                                "Out put the visitor file")),
     llvm::cl::values(clEnumValN(dumpAll, "all", "put out all file")));
 
 /// Control generation of ast, tablegen files and antlr files.
@@ -28,9 +29,9 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
   bool emitAst = emitAction == Action::dumpAst;
   bool emitAntlr =
       emitAction == Action::dumpAntlr || emitAction == Action::dumpAll;
-  bool emitTd =
-      emitAction == Action::dumpTd || emitAction == Action::dumpAll;
-  bool emitVisitor = emitAction == Action::dumpVisitor || emitAction == Action::dumpAll;
+  bool emitTd = emitAction == Action::dumpTd || emitAction == Action::dumpAll;
+  bool emitVisitor =
+      emitAction == Action::dumpVisitor || emitAction == Action::dumpAll;
   if (emitAntlr) {
     if (grammarName.empty()) {
       llvm::errs() << "if you want to emit g4 file you have to point out the "
@@ -80,7 +81,7 @@ void emit(frontendgen::Module *module, frontendgen::Terminators &terminators) {
     delete rule;
   }
 
-  for (auto* opinterface : module->getOpInterfaces())
+  for (auto *opinterface : module->getOpInterfaces())
     delete opinterface;
   delete module->getDialect();
   for (auto op : module->getOps()) {
